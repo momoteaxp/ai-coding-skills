@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# FileGuard L3：pre-commit 文件放置规则强制检查（项目级版）
+# 机制：复制到项目 .git/hooks/pre-commit（chmod +x），仅影响当前仓库
+# 职责：查找最近的 project_meta.json 作为项目根，只拦本项目内的违规文件
+# 非受管项目（无 project_meta.json）→ 静默通过，零污染
+set -u
+# Windows git-bash 默认 locale 可能是 GBK，git 输出的 UTF-8 文件名会被 basename/grep 读成乱码
+# （如 _索引.md → _绱㈠紩.md）导致规则误判 → 强制 UTF-8（0.4.10 修复）
+export LC_ALL=C.UTF-8 LANG=C.UTF-8 2>/dev/null || true
+# python 在 Windows 默认 GBK 输出，py -c 读出的中文规则（如 _索引）会变 GBK 字节，grep 匹配失败 → 强制 UTF-8
+export PYTHONIOENCODING=utf-8 2>/dev/null || true
+fail=0
+msg() { echo "[FileGuard-pre-commit] $*"; }
+
+# python 解释器探测：Windows 上 python3 常解析到商店占位 stub（"Python was not found"），
+# 必须探测"能真正运行"的解释器；优先 python，退回 python3（换机环境适配，P0-7 / 0.4.10）
+py() {
+  local cand
+  for cand in python python3; do
+    if command -v "$cand" >/dev/null 2>&1 && "$cand" -c "import sys" >/dev/null 2>&1; then
+      "$cand" "$@"
+      return $?
+    fi
+  done
+  msg "未找到可用的 python 解释器（python/python3 均不可用），跳过检查"; return 0
+}
+
+# 查找项目根：含 project_meta.json 的最近父目录（从 git 仓库根向上）
+# 注意：git-bash/MSYS 下 $PWD 是 /d/... 风格，Windows python 打不开，
+# 找到后统一转成 Windows 风格（D:/...）再输出（0.4.10 修复）
+find_project_root() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ] && [ "$dir" != "" ]; do
+    if [ -f "$dir/project_meta.json" ]; then
+      if command -v cygpath >/dev/null 2>&1; then
+        cygpath -m "$dir"  # D:/comate/products/file-guard（正斜杠，与 repo_root 一致）
+      else
+        echo "$dir"
+      fi
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+# C0 规则源（禁用默认名等从 C0 读取；C0 缺失时脚本内置兜底）
+# comate 套件：COMATE_FG_HOME 优先，兼容旧 FG_HOME，缺省 D:/comate（2026-10-27 漂移修正）
+FG_C0="${COMATE_FG_HOME:-${FG_HOME:-D:/comate}}/_rules/global-rules.json"
+
+PROJECT_ROOT=$(find_project_root) || {
+  # 非受管项目，静默通过
+  exit 0
+}
+
+# 获取相对于项目根的路径
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")
+
+# 中文路径不转义：git 默认 core.quotepath=true 会把中文名转成八进制+引号，
+# 导致 basename 取到乱码，默认名/版本后缀检查全部失效（0.4.8 修复）
+while IFS= read -r -d '' f; do
+  [ -z "$f" ] && continue
+  name=$(basename "$f")
+
+  # 计算文件相对于项目根的路径（Windows os.path.relpath 返回反斜杠，统一转正斜杠与 grep 规则匹配）
+  full_path="$repo_root/$f"
+  rel_path=$(py -c "import os.path,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]).replace('\\\\','/'))" "$full_path" "$PROJECT_ROOT" 2>/dev/null || echo "$f")
+
+  # 1) 文件名带版本后缀（_v2/_v3）——版本交给 git 历史
+  if printf '%s' "$name" | grep -Eq '_[vV][0-9]{1,3}(\.[0-9]+)?(\.[a-zA-Z0-9]+)?$'; then
+    msg "拒绝提交：文件名带版本后缀 $f（用 git 历史代替 _v2/_v3）"; fail=1
+  fi
+
+  # 2) 草稿区/回收站不得入库（_scratch/_trash 任意层级；_scratch 不限制命名，不入 git）
+  if printf '%s' "$rel_path" | grep -Eq '(^|/)\.?(_scratch|_trash)(/|$)'; then
+    msg "拒绝提交：_scratch/_trash 目录不入 git（草稿 TTL 清理、回收站 30 天人工确认）：$f"; fail=1
+  fi
+
+  # 2.5) 禁用默认名（C0 naming_rules.forbidden_defaults：新建文本文档/新建文件夹/未命名/Untitled/Document）
+  default_name_hit=$(py -c "
+import json,sys,os,re
+words=[]
+try:
+    c=json.load(open(sys.argv[1],encoding='utf-8'))
+    words=(c.get('rules') or {}).get('naming_rules',{}).get('forbidden_defaults') or []
+except Exception:
+    words=[]
+if not words:
+    words=['新建文本文档','新建文件夹','未命名','Untitled','Document']
+stem=re.sub(r'\.[^.]*$','',os.path.basename(sys.argv[2])).lower()
+print('1' if any(stem==str(w).lower() for w in words) else '0')
+" "${FG_C0:-D:/comate/_rules/global-rules.json}" "$name" 2>/dev/null || echo 0)
+  if [ "$default_name_hit" = "1" ]; then
+    msg "拒绝提交：禁用默认名 $f（改用有意义的名称）"; fail=1
+  fi
+
+  # 3) 项目根目录散落（仅对当前项目根生效；放行名单 = root_file_name_rule + .gitignore + 隐藏文件）
+  if [ "$(dirname "$rel_path")" = "." ]; then
+    if [ "${name:0:1}" = "." ]; then
+      continue  # 隐藏文件（.fileguard-sync.json 指纹等工具生成物）不受散落限制
+    fi
+    if [ "$name" = ".gitignore" ]; then
+      continue
+    fi
+    root_rule=$(py -c "
+import json,sys
+try:
+    m=json.load(open(sys.argv[1],encoding='utf-8'))
+    print(m.get('root_file_name_rule', r'^(README|LICENSE|project_meta|_索引|_trash)'))
+except Exception:
+    print(r'^(README|LICENSE|project_meta|_索引|_trash)')
+" "$PROJECT_ROOT/project_meta.json" 2>/dev/null)
+    root_rule="${root_rule:-^(README|LICENSE|project_meta|_索引|_trash)}"
+    if ! printf '%s' "$name" | grep -Eq "$root_rule"; then
+      msg "拒绝提交：项目根目录禁止散落文件：$f（放入 src/scripts/docs 等子目录，或加入 project_meta.json 的 root_file_name_rule）"; fail=1
+    fi
+  fi
+done < <(git -c core.quotepath=false diff --cached --name-only -z)
+
+# 4) 防漏检查：提交时发现未跟踪但应跟踪的文件（防漏提交）
+#    只对"未被 .gitignore 忽略、又未被跟踪"的文件生效；豁免见 project_meta.json 的 untracked_exempt（正则列表）
+untracked_exempt=$(py -c "
+import json,sys
+try:
+    m=json.load(open(sys.argv[1],encoding='utf-8'))
+    print('\n'.join(m.get('untracked_exempt') or []))
+except Exception:
+    pass
+" "$PROJECT_ROOT/project_meta.json" 2>/dev/null || true)
+leak=0
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  # porcelain 未跟踪行形如 "?? path"
+  case "$line" in
+    '?? '*) f="${line#\?\? }" ;;
+    *) continue ;;
+  esac
+  full_path="$repo_root/$f"
+  rel_path=$(py -c "import os.path,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]).replace('\\\\','/'))" "$full_path" "$PROJECT_ROOT" 2>/dev/null || echo "$f")
+  exempted=0
+  while IFS= read -r pat; do
+    [ -z "$pat" ] && continue
+    if printf '%s' "$rel_path" | grep -Eq "$pat"; then
+      exempted=1; break
+    fi
+  done <<< "$untracked_exempt"
+  if [ "$exempted" = "0" ]; then
+    msg "防漏：发现未跟踪文件：$f（应跟踪请 git add；不应跟踪请加入 .gitignore 或 project_meta.json 的 untracked_exempt）"
+    leak=1
+  fi
+done < <(git status --porcelain --untracked-files=all)
+if [ "$leak" = "1" ]; then fail=1; fi
+
+exit $fail

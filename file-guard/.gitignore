@@ -1,0 +1,13 @@
+_checkpoint/
+_scratch/
+_trash/
+release/
+output/
+backup/
+archive/
+data/
+__pycache__/
+*.pyc
+
+# deploy 生成（含本机路径，不入库）
+hooks/hooks.json

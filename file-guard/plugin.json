@@ -1,0 +1,14 @@
+{
+  "name": "file-guard",
+  "version": "0.6.2",
+  "description": "FileGuard for Comate — 写前拦截（PreToolUse）+ 压缩钩子（PreCompact）+ 套件体检 skill + .comateignore 引擎级兜底，独立单源套件",
+  "author": {
+    "name": "file-guard"
+  },
+  "keywords": [
+    "file-guard",
+    "enforcer",
+    "safety",
+    "hooks"
+  ]
+}

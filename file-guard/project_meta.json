@@ -1,0 +1,86 @@
+{
+  "name": "file-guard",
+  "label": "FileGuard (Comate) 插件套件",
+  "type": "suite",
+  "description": "comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skill + .comateignore 引擎级兜底 + new-project skill），独立单源（2026-10-23 脱离原基准，enforcer.py/init.py/checkpoint-manager.py/规则文件均在 comate 侧）",
+  "version": "0.6.2",
+  "release_name": "file-guard-comate",
+  "delivery_policy": "公开上传：仅经统一发版工具发布（套件自身不推送、不内置上传能力）；源码公开（MIT）",
+  "publish_exclude": [
+    "docs/交接文档-20261022.md",
+    "hooks/hooks.json"
+  ],
+  "tagline": "Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系",
+  "audience": "在 Comate 中做 AI 辅助开发、希望文件写入有护栏、项目结构统一、跨窗口不丢进度的开发者",
+  "features": [
+    "写前拦截：PreToolUse 钩子按 project_meta.json 规则拦截违规写入（目录白名单/只读/敏感文件）",
+    ".comateignore 引擎级兜底：不依赖 hooks，引擎层拦读+拦写，热更新",
+    "跨窗口续接：checkpoint save/load + 压缩自动归档，进度真源 latest.json",
+    "一条龙建项目：new-project / takeover-project skill（骨架→登记→验收）",
+    "套件体检：doctor D1-D12 自检 + 发版门禁（版本一致 / 自举合规）",
+    "本地优先：数据不出本机，无需云端"
+  ],
+  "highlights": [
+    "规则即代码：project_meta.json 驱动的写前拦截，不靠 AI 自觉",
+    "安装自适应：部署时询问受管根、按实际路径生成 hooks，不写死盘符",
+    "Windows 深度集成：junction 挂载 + 计划任务归位，开箱即用"
+  ],
+  "quickstart": "1. 挂载并配置：powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1（按提示填写受管根）\n2. 体检：python scripts/doctor.py（D1-D12 全绿）\n3. 新建受管项目：python scripts/new-project.py <name> --type skill",
+  "usage": "日常使用 /new-project 建项目、/takeover-project 接手项目、/fileguard-doctor 体检。发布统一走 github-publish，本套件自身不含上传能力。",
+  "requirements": "- Windows 10/11（hooks、计划任务、junction 依赖 Windows）\n- Comate 客户端（插件目录 ~/.comate/plugins）\n- Python 3.10+ / PowerShell 5.1+\n- 受管根安装时询问（默认 D:/comate，保存为用户环境变量 COMATE_FG_HOME）\n- 安装 L4 计划任务需管理员权限",
+  "platform": "Windows",
+  "structure": "file-guard/\n├─ hooks/        hooks.template.json（公开；hooks.json 部署时生成）\n├─ scripts/      enforcer / doctor / new-project / build-release 等\n├─ skills/       new-project / takeover-project / fileguard-doctor\n├─ rules/ templates/ docs/ _checkpoint/ release/",
+  "dirs": {
+    "hooks": [
+      "*.json"
+    ],
+    "scripts": [
+      "*.py",
+      "*.ps1",
+      "*.sh",
+      "*.bat",
+      "*.vbs",
+      "pre-commit"
+    ],
+    "skills": [
+      "*.md",
+      "*.json"
+    ],
+    "templates": [
+      "*.md",
+      "*.json"
+    ],
+    "docs": [
+      "*.md",
+      "*.txt"
+    ],
+    "rules": [
+      "*.json",
+      "*.md"
+    ],
+    ".comate": [
+      "*.json",
+      "*.comateignore"
+    ],
+    "release": [
+      "*.zip"
+    ],
+    "_checkpoint": [
+      "*.json"
+    ],
+    "_scratch": [],
+    "_trash": []
+  },
+  "root_file_name_rule": "^(plugin|README|LICENSE|project_meta|_索引|_trash)",
+  "read_only_files": [],
+  "read_only_dirs": [],
+  "reuse_dirs": [
+    "scripts",
+    "skills",
+    "docs"
+  ],
+  "trash_dir": "_trash",
+  "trash_ttl_days": 30,
+  "strict_mode": true,
+  "note": "本文件修改需经用户确认；AI 放置规则由 FileGuard(comate) 写前拦截读取（scripts/enforcer.py 独立单源）；新目录/扩展名按 C0 规则模板补登记（rules/global-rules.json 独立文件）"
+}

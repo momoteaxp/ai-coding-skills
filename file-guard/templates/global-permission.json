@@ -1,0 +1,14 @@
+{
+  "comment": "FileGuard L1 骨架权限模板——由 init.py/sync-projects.py 渲染后放置到项目 config/global-permission.json。实际拦截由 L2 插件按 project_meta.json 执行，本文件为 L2 不可用时的兜底声明。",
+  "version": "1.0",
+  "project": "{project_name}",
+  "type": "{type}",
+  "allow_read": ["**"],
+  "allow_write_dirs": [],
+  "deny_paths": [
+    "_trash/**",
+    "**/__pycache__/**",
+    "**/.git/**"
+  ],
+  "note": "本文件为骨架模板，目录级白名单以 project_meta.json 的 dirs 字段为准"
+}

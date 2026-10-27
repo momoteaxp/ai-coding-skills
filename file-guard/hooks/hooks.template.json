@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "write_file|edit_file|delete_file|apply_patch|read_file|glob_path|grep_content|list_dir|read_lints|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python {PLUGIN_DIR}/scripts/pre-tool-use.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python {PLUGIN_DIR}/scripts/pre-compact.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

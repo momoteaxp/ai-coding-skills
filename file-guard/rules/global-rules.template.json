@@ -1,0 +1,957 @@
+{
+  "name": "file-guard-global-rules",
+  "version": "0.5.0",
+  "description": "FileGuard C0 全局规则源——所有通道（L1/L2/C1/C5/C6）从此读取规则，禁止任何通道私自硬编码",
+  "effective_since": "2026-09-19",
+  "updated": "2026-10-23",
+  "rules": {
+    "blacklisted_names": {
+      "file": [
+        "^~\\$",
+        "^新建[文本文档]*\\.",
+        "\\.tmp$",
+        "\\.bak$",
+        "_v2\\.",
+        "_v3\\.",
+        "_v4\\.",
+        "_v5\\.",
+        "_v6\\.",
+        "^test[-_]?(deploy|demo|reboot)\\.txt$",
+        "^tmp_",
+        "^temp_",
+        "^nul$"
+      ],
+      "dir": [
+        "^__pycache__$",
+        "^\\.git$",
+        "^\\.svn$",
+        "^\\.hg$"
+      ]
+    },
+    "blacklisted_root_patterns": [
+      "^新建",
+      "^_v[0-9]",
+      "^test[-_]?(deploy|demo|reboot)",
+      "^tmp_",
+      "^temp_"
+    ],
+    "protected_dirs": {
+      "_trash": {
+        "allow_write": false,
+        "note": "禁止直写，写入经 pre-write backup 或 L4 归位"
+      },
+      "_archive": {
+        "allow_write": true,
+        "note": "归档区，允许写入"
+      }
+    },
+    "allowed_root_dirs": [
+      "_rules",
+      "_scratch",
+      "_trash",
+      "_archive",
+      "scripts",
+      "fgscripts",
+      "project workspace",
+      "设计思路",
+      "评估报告",
+      "日常交付",
+      "数据分析",
+      "剧本创作",
+      "照片整理",
+      "素材库",
+      "学习资料",
+      "产品",
+      "其他",
+      "inbox"
+    ],
+    "root_file_name_rule_default": "^(README|LICENSE|project_meta|_索引|_trash)",
+    "archive_dirs": [
+      "release",
+      "archive",
+      "backup",
+      "demo/交付",
+      "demo/打包层",
+      "版本包归档"
+    ],
+    "trigger_words": {
+      "verbs": [
+        "新建",
+        "创建",
+        "做一个",
+        "开发",
+        "写"
+      ],
+      "nouns": [
+        "项目",
+        "skill",
+        "插件",
+        "程序",
+        "App",
+        "脚本",
+        "工具"
+      ],
+      "extra": "搞一个XXX"
+    },
+    "checkpoint": {
+      "history_limit": 5,
+      "freshness_hours": 24,
+      "read_scope": "current_project_only",
+      "read_scope_note": "AI 读取 checkpoint 只允许指向【当前会话所属项目】的 _checkpoint。当前项目根由会话目录（L2 插件工厂 ctx.directory/worktree，env FILEGUARD_CURRENT_DIR 可覆盖）自路径上溯最近的 project_meta.json 确定。命中判据：目标路径落在某个 _checkpoint 目录、且其所属项目 ≠ 当前项目 → 无条件拦截（与 strict_mode 无关）并回执纠正到本项目。四条读取向量：read/grep/glob/bash（bash 按命令分词提取含 _checkpoint 的 token）。显式逃生通道：tools/checkpoint-manager.py load --project <目标项目根>（命令不含 _checkpoint 路径 token，故放行）——跨项目仅当用户显式点名目标项目时使用。当前项目未识别（无可上溯的 project_meta.json）时仅告警放行，不硬拦。read_scope 改为非 current_project_only 值即可一键关闭该拦截。",
+      "read_vectors": [
+        "read",
+        "grep",
+        "glob",
+        "bash"
+      ]
+    },
+    "naming_rules": {
+      "date_prefix": "^\\d{4}-\\d{2}-\\d{2}[_-]",
+      "mandatory_date_prefix_for": [
+        "日常交付",
+        "评估报告",
+        "数据分析",
+        "设计思路"
+      ],
+      "forbidden_defaults": [
+        "新建文本文档",
+        "新建文件夹",
+        "未命名",
+        "Untitled",
+        "Document"
+      ]
+    },
+    "read_only_semantics": {
+      "purpose": "只读清单唯一真源语义。read_only_files / read_only_dirs 命中即拦截（strict_mode=true 项目 throw，其余 warn-only）；project_meta.json 永不拦截：meta 承载版本号、发版必然写入，仅受「用户确认 + 写前备份」约束。",
+      "never_blocked_files": [
+        "project_meta.json"
+      ],
+      "note": "project_meta.json 禁止进入任何类型模板的 read_only_files；所有消费通道（L2 src/file-guard-enforcer.js、C1 tools/enforcer.py、派生 tools/init.py）必须按本白名单豁免，并消费 read_only_dirs（Type C input 输入区只读防污染）。",
+      "default_files": [
+        "config/global-permission.json",
+        "docs/README.md",
+        "_索引.md"
+      ],
+      "default_dirs": [],
+      "consumers": [
+        "src/file-guard-enforcer.js",
+        "tools/enforcer.py",
+        "tools/init.py",
+        "tools/sync-projects.py"
+      ]
+    },
+    "dir_type_map": {
+      "software": {
+        "label": "软件应用（src-layout）",
+        "note": "Type software：主程序与一次性脚本物理隔离（src vs _scratch）；release 命名强制 SEMVER(vX.Y.Z)；根级清单文件（pyproject.toml/package.json/go.mod/Cargo.toml/requirements.txt）白名单放行；版本号规范见 docs/版本管理规范.md",
+        "root_file_name_rule": "^(README|LICENSE|project_meta|_索引|_trash|pyproject\\.toml|package\\.json|go\\.mod|Cargo\\.toml|requirements\\.txt)",
+        "strict_mode": true,
+        "read_only_dirs": [],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "src",
+          "tests",
+          "tests/fixtures",
+          "config",
+          "scripts",
+          "docs",
+          "tools",
+          "assets",
+          "data",
+          "release",
+          "backup",
+          "output",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "src": [
+            "*.js",
+            "*.ts",
+            "*.py",
+            "*.java",
+            "*.go",
+            "*.rs",
+            "*.cpp",
+            "*.c",
+            "*.h",
+            "*.json",
+            "*.toml",
+            "*.yaml",
+            "*.yml"
+          ],
+          "tests": [
+            "*.py",
+            "*.js",
+            "*.ts",
+            "*.ps1",
+            "*.sh"
+          ],
+          "tests/fixtures": [],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.toml",
+            "*.ini",
+            "*.env.example"
+          ],
+          "scripts": [
+            "*.ps1",
+            "*.py",
+            "*.sh",
+            "*.bat",
+            "*.cmd",
+            "*.vbs",
+            "pre-commit",
+            "install-hooks.sh"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt",
+            "*.rst"
+          ],
+          "tools": [
+            "*.py",
+            "*.js",
+            "*.ps1",
+            "*.sh"
+          ],
+          "assets": [
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.svg",
+            "*.ico",
+            "*.gif",
+            "*.webp"
+          ],
+          "data": [
+            "*.json",
+            "*.csv",
+            "*.db",
+            "*.sql",
+            "*.log",
+            "*.parquet"
+          ],
+          "release": [
+            "*.zip",
+            "*.exe",
+            "*.msi",
+            "*.tgz",
+            "*.tar.gz",
+            "*.deb",
+            "*.rpm"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db",
+            "*.sql",
+            "*.log"
+          ],
+          "output": [
+            "*.md",
+            "*.xlsx",
+            "*.pdf",
+            "*.docx",
+            "*.pptx",
+            "*.html",
+            "*.csv"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": [],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ]
+        }
+      },
+      "skill": {
+        "label": "客户端 skill（Agent Skills 规范）",
+        "note": "Type skill：SKILL.md 必含 name+description frontmatter（name 小写短横线 ≤64 字符）；可选子目录 scripts/references/assets 渐进式披露；hooks/skills/tests/references 为规范新增目录；产品与数据分离（notes/ 客户数据永不进包）；demo 一律单 exe",
+        "root_file_name_rule": "^(SKILL|README|LICENSE|project_meta|_索引|deployment-guide|backup)",
+        "strict_mode": true,
+        "read_only_dirs": [],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "scripts",
+          "hooks",
+          "skills",
+          "references",
+          "tests",
+          "config",
+          "templates",
+          "tools",
+          "docs",
+          "assets",
+          "notes",
+          "notes/敏感数据",
+          "notes/公共资料",
+          "notes/项目文档",
+          "demo",
+          "demo/源文件",
+          "demo/交付",
+          "版本包归档",
+          "backup",
+          "output",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "scripts": [
+            "*.py",
+            "*.ps1",
+            "*.sh",
+            "*.js",
+            "*.bat"
+          ],
+          "hooks": [
+            "*.json"
+          ],
+          "skills": [
+            "*.md",
+            "*.json"
+          ],
+          "references": [
+            "*.md",
+            "*.txt",
+            "*.pdf"
+          ],
+          "tests": [
+            "*.py",
+            "*.js",
+            "*.ts",
+            "*.ps1"
+          ],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.toml"
+          ],
+          "templates": [
+            "*.md",
+            "*.json",
+            "*.docx",
+            "*.html"
+          ],
+          "tools": [
+            "*.py",
+            "*.js",
+            "*.ps1"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt"
+          ],
+          "assets": [
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.svg",
+            "*.ico",
+            "*.webp",
+            "*.gif"
+          ],
+          "notes": [],
+          "notes/敏感数据": [],
+          "notes/公共资料": [],
+          "notes/项目文档": [],
+          "demo": [],
+          "demo/源文件": [],
+          "demo/交付": [
+            "*.exe",
+            "*.zip"
+          ],
+          "版本包归档": [
+            "*.zip"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db",
+            "*.sql"
+          ],
+          "output": [
+            "*.md",
+            "*.xlsx",
+            "*.pdf",
+            "*.docx"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": [],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ]
+        }
+      },
+      "suite": {
+        "label": "套件（插件+skill+规则组合）",
+        "note": "Type suite：plugin.json 根级（comate 自动发现）；hooks/hooks.json 与全局 ~/.comate/hooks.json 一致口径；skills/ 每 SKILL.md 子目录；_rules/ 规则真源；.comateignore 由 ignore-gen 生成维护（.comate 白名单已含该扩展名）；自身违规=0 是发版门槛",
+        "root_file_name_rule": "^(plugin|SKILL|README|LICENSE|project_meta|_索引|deployment-guide|backup)",
+        "strict_mode": true,
+        "read_only_dirs": [],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "scripts",
+          "skills",
+          "hooks",
+          "_rules",
+          "config",
+          "templates",
+          "tools",
+          "docs",
+          "release",
+          ".comate",
+          "backup",
+          "output",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "scripts": [
+            "*.py",
+            "*.ps1",
+            "*.sh",
+            "*.js",
+            "*.bat",
+            "*.vbs"
+          ],
+          "skills": [
+            "*.md",
+            "*.json"
+          ],
+          "hooks": [
+            "*.json"
+          ],
+          "_rules": [
+            "*.json",
+            "*.md"
+          ],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.toml"
+          ],
+          "templates": [
+            "*.md",
+            "*.json",
+            "*.docx"
+          ],
+          "tools": [
+            "*.py",
+            "*.js",
+            "*.ps1"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt"
+          ],
+          "release": [
+            "*.zip",
+            "*.exe",
+            "*.msi",
+            "*.tgz",
+            "*.tar.gz"
+          ],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db",
+            "*.sql"
+          ],
+          "output": [
+            "*.md",
+            "*.xlsx",
+            "*.pdf",
+            "*.docx"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": []
+        }
+      },
+      "web": {
+        "label": "网页开发",
+        "note": "Type web：src/public/components/styles 前端约定；根级清单 package.json/tsconfig/vite|next 配置白名单放行；构建产物进 release/",
+        "root_file_name_rule": "^(README|LICENSE|project_meta|_索引|package\\.json|tsconfig\\.json|vite\\.config\\.(ts|js)|next\\.config\\.(ts|js))",
+        "strict_mode": true,
+        "read_only_dirs": [],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "src",
+          "public",
+          "components",
+          "styles",
+          "tests",
+          "config",
+          "scripts",
+          "docs",
+          "assets",
+          "release",
+          "backup",
+          "output",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "src": [
+            "*.js",
+            "*.ts",
+            "*.jsx",
+            "*.tsx",
+            "*.json"
+          ],
+          "public": [
+            "*"
+          ],
+          "components": [
+            "*.jsx",
+            "*.tsx",
+            "*.js",
+            "*.ts"
+          ],
+          "styles": [
+            "*.css",
+            "*.scss",
+            "*.less"
+          ],
+          "tests": [
+            "*.js",
+            "*.ts",
+            "*.jsx",
+            "*.tsx"
+          ],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.toml"
+          ],
+          "scripts": [
+            "*.js",
+            "*.ts",
+            "*.ps1",
+            "*.sh",
+            "*.py"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt"
+          ],
+          "assets": [
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.svg",
+            "*.ico",
+            "*.webp",
+            "*.gif"
+          ],
+          "release": [
+            "*.zip",
+            "*.html",
+            "*.tgz",
+            "*.tar.gz"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db",
+            "*.sql"
+          ],
+          "output": [
+            "*.md",
+            "*.html",
+            "*.pdf"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": [],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ]
+        }
+      },
+      "docgen": {
+        "label": "文档生成/解析管线",
+        "note": "Type docgen：input/ 只读防污染；内容三态单向管线 content/raw（不可变）→ admission（准入）→ pool（可用池）→ output/（交付）；templates/ 渲染模板；intermediate/ 解析中间产物",
+        "root_file_name_rule": "^(SKILL|README|LICENSE|project_meta|_索引)",
+        "strict_mode": true,
+        "read_only_dirs": [
+          "input"
+        ],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "input",
+          "intermediate",
+          "templates",
+          "content",
+          "content/raw",
+          "content/admission",
+          "content/pool",
+          "output",
+          "scripts",
+          "tools",
+          "config",
+          "docs",
+          "samples",
+          "assets",
+          "backup",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "input": [],
+          "intermediate": [
+            "*.dxf",
+            "*.json",
+            "*.csv"
+          ],
+          "templates": [
+            "*.md",
+            "*.json",
+            "*.docx",
+            "*.html"
+          ],
+          "content": [
+            "*.json",
+            "*.md",
+            "*.yaml",
+            "*.yml"
+          ],
+          "content/raw": [
+            "*.json",
+            "*.md"
+          ],
+          "content/admission": [
+            "*.json"
+          ],
+          "content/pool": [
+            "*.json"
+          ],
+          "output": [
+            "*.xlsx",
+            "*.xls",
+            "*.pdf",
+            "*.docx",
+            "*.md",
+            "*.html"
+          ],
+          "scripts": [
+            "*.py",
+            "*.ps1",
+            "*.bat"
+          ],
+          "tools": [
+            "*.py",
+            "*.js",
+            "*.ps1",
+            "*.sh"
+          ],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt",
+            "*.rst",
+            "*.pdf",
+            "*.docx"
+          ],
+          "samples": [
+            "*.dwg",
+            "*.docx",
+            "*.pdf"
+          ],
+          "assets": [
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.svg",
+            "*.mp4",
+            "*.mov",
+            "*.mp3"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": [],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ]
+        }
+      },
+      "ops": {
+        "label": "运维/维护项目",
+        "note": "Type ops：低频改动、以配置与数据为主；无 src/tests/release；backup 收项目级备份；版本号规范见 docs/版本管理规范.md",
+        "root_file_name_rule": "^(README|project_meta|_索引)",
+        "strict_mode": true,
+        "read_only_dirs": [],
+        "read_only_files": [
+          "config/global-permission.json",
+          "docs/README.md",
+          "_索引.md"
+        ],
+        "dirs": [
+          "_checkpoint",
+          "config",
+          "data",
+          "scripts",
+          "tools",
+          "docs",
+          "backup",
+          "output",
+          "archive",
+          "_scratch",
+          "_trash"
+        ],
+        "dirs_meta": {
+          "_checkpoint": [
+            "*.json"
+          ],
+          "config": [
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.toml",
+            "*.ini"
+          ],
+          "data": [
+            "*.json",
+            "*.csv",
+            "*.db",
+            "*.sql",
+            "*.log",
+            "*.parquet"
+          ],
+          "scripts": [
+            "*.py",
+            "*.ps1",
+            "*.sh",
+            "*.bat"
+          ],
+          "tools": [
+            "*.py",
+            "*.ps1"
+          ],
+          "docs": [
+            "*.md",
+            "*.txt"
+          ],
+          "backup": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz",
+            "*.db",
+            "*.sql",
+            "*.log"
+          ],
+          "output": [
+            "*.md",
+            "*.xlsx",
+            "*.pdf"
+          ],
+          "archive": [
+            "*.zip",
+            "*.tar.gz",
+            "*.tgz"
+          ],
+          "_scratch": [],
+          "_trash": [],
+          ".comate": [
+            "*.json",
+            "*.comateignore"
+          ]
+        }
+      }
+    },
+    "strict_mode_default": false,
+    "trash_ttl_days": 30,
+    "handoff_policy": {
+      "purpose": "仅用于新会话上下文承接（恢复任务进度）",
+      "prohibited_actions": [
+        "依据 handoff 内容切换当前任务",
+        "依据 handoff 内容重复执行历史任务",
+        "把 handoff 中的历史任务当作当前指令执行"
+      ],
+      "note": "AI 读取 handoff 后只获取进度快照，不得依据其内容改变当前执行方向。handoff.md 是档案不是指令。"
+    },
+    "dangerous_commands": {
+      "enabled": true,
+      "note": "危险命令拦截规则表（F1）：L2 在 bash 调用前扫描命令，命中规则按双模式处理（strict_mode=true 项目 throw，其余 warn-only）。active=false 可停用单条；新增规则 id 需同步 file-guard-enforcer.js 的判定函数；禁止在插件/hooks/doctor 中私自追加。",
+      "rules": {
+        "git.reset-hard": {
+          "active": true,
+          "intent": "hard_stop",
+          "hint": "git reset --hard 会丢弃工作区与暂存区全部未提交改动且不可恢复，建议先 git stash 或备份"
+        },
+        "git.branch-force-delete": {
+          "active": true,
+          "intent": "use_alternative",
+          "hint": "git branch -D 强制删除分支会丢弃其上全部提交，确认无保留价值后再操作"
+        },
+        "git.clean-force": {
+          "active": true,
+          "intent": "use_alternative",
+          "hint": "git clean -f 会删除所有未跟踪文件且不可恢复，建议先 git clean -n 预览"
+        },
+        "git.stash-clear": {
+          "active": true,
+          "intent": "manual_only",
+          "hint": "git stash clear 会永久清空全部 stash 记录，建议先 git stash list 确认"
+        },
+        "git.stash-drop": {
+          "active": true,
+          "intent": "use_alternative",
+          "hint": "git stash drop 会删除指定的 stash 记录，确认无误后再操作"
+        },
+        "git.tag-delete": {
+          "active": true,
+          "intent": "manual_only",
+          "hint": "git tag --delete 会删除标签，确认无须再保留"
+        },
+        "git.reflog-delete": {
+          "active": true,
+          "intent": "manual_only",
+          "hint": "git reflog delete 会删除 reflog 条目，可能影响历史恢复能力"
+        },
+        "rm.root": {
+          "active": true,
+          "intent": "hard_stop",
+          "hint": "禁止删除根目录 /：此操作会破坏系统且不可恢复"
+        },
+        "rm.home": {
+          "active": true,
+          "intent": "hard_stop",
+          "hint": "禁止删除家目录 ~/$HOME：此操作会清空用户数据且不可恢复"
+        },
+        "rm.git-metadata": {
+          "active": true,
+          "intent": "hard_stop",
+          "hint": "禁止删除 .git 目录：会销毁整个仓库的提交历史"
+        }
+      }
+    },
+    "reserved_device_names": {
+      "note": "Windows 保留设备名（Win32 语义：含扩展名亦保留，如 nul.txt 同样保留）。git-bash（MSYS）不将其映射为空设备：>nul / 2>nul / >/dev/nul / touch nul / mkdir nul 都会生成真实文件且 PS/cmd 常规手段无法删除。消费通道（L2 src/file-guard-enforcer.js 源头拦截、tools/scratch-clean.py 与 tools/trash-cli.py 兜底回收、tools/doctor.py 残留审计）必须从此读取，禁止私自硬编码；bash 丢弃输出统一用 2>/dev/null（MSYS 下只有 /dev/null 是空设备，/dev/nul 少一个 l 同样会生成文件）。",
+      "names": [
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9"
+      ]
+    },
+    "note": "任何通道需要新增黑名单/白名单条目，必须改此文件并同步所有消费者；禁止在插件/hooks/doctor 中私自追加",
+    "type_aliases": {
+      "A": "software",
+      "B": "skill",
+      "C": "docgen"
+    }
+  }
+}
