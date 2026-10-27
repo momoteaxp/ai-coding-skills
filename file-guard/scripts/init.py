@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """FileGuard init —— 新项目初始化工具（F10）
 用法:
-    python init.py <项目名> --type A|B|C [--root D:\\comate\\products] [--force]
+    python init.py <项目名> --type A|B|C [--root %USERPROFILE%\\comate\\products] [--force]
 功能:
     1. 按类型模板创建骨架目录（只增不改，不物理移动任何既有文件）
     2. 写 project_meta.json（机器可读规则）
@@ -199,7 +199,7 @@ TYPE_TEMPLATES = {
     },
 }
 
-# P1-5：默认父目录 = FG_HOME/产品（FG_HOME env 可覆盖；缺省 D:/comate）
+# P1-5：默认父目录 = FG_HOME/产品（FG_HOME env 可覆盖；缺省 %USERPROFILE%/comate）
 DEFAULT_ROOT = str(fg_home() / "产品")
 C0_PATH_ENV = "FG_HOME"
 C0_REL = "_rules/global-rules.json"
@@ -218,7 +218,7 @@ def load_type_templates() -> dict:
     - 内置 TYPE_TEMPLATES 仅作为 C0 缺失/损坏时的兜底，同样不含 meta。
     """
     try:
-        fg_home = os.environ.get(C0_PATH_ENV, r"D:\comate")
+        fg_home = os.environ.get(C0_PATH_ENV, str(Path.home() / "comate"))
         c0_path = Path(fg_home) / C0_REL
         c0 = json.loads(c0_path.read_text(encoding="utf-8"))
         source = c0["rules"]["dir_type_map"]
@@ -261,7 +261,7 @@ ALIAS_FALLBACK = {"A": "software", "B": "skill", "C": "docgen"}
 def type_aliases() -> dict:
     """C0 rules.type_aliases（旧 A/B/C → 新细类标识）；读取失败回退内置。"""
     try:
-        fg_home = os.environ.get(C0_PATH_ENV, r"D:\comate")
+        fg_home = os.environ.get(C0_PATH_ENV, str(Path.home() / "comate"))
         c0 = json.loads((Path(fg_home) / C0_REL).read_text(encoding="utf-8"))
         return c0["rules"].get("type_aliases") or ALIAS_FALLBACK
     except Exception:
@@ -279,10 +279,10 @@ TYPE_CATEGORY.update({"ops": "ops"})
 
 
 def register_project(proj: Path, ptype: str) -> Path | None:
-    """把新项目登记进中央登记表（D:\\comate\\_rules\\managed-projects.json）。
+    """把新项目登记进中央登记表（%USERPROFILE%\\comate\\_rules\\managed-projects.json）。
     登记表缺失/不可写时仅告警（不阻断建项目）；已登记则幂等跳过。"""
     try:
-        reg_path = Path(os.environ.get(C0_PATH_ENV, r"D:\comate")) / "_rules" / "managed-projects.json"
+        reg_path = Path(os.environ.get(C0_PATH_ENV, str(Path.home() / "comate"))) / "_rules" / "managed-projects.json"
         reg = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.is_file() else {"version": 1, "updated": "", "projects": []}
         roots = [str(Path(p["root"]).resolve()) for p in reg.get("projects", [])]
         if str(proj.resolve()) in roots:
@@ -372,11 +372,11 @@ MINI_PATHS_PY = """#!/usr/bin/env python3
 import os
 from pathlib import Path
 
-FALLBACK_HOME = "D:/comate"
+FALLBACK_HOME = str(Path.home() / "comate")
 
 
 def fg_home() -> Path:
-    \"\"\"受管根目录: env COMATE_FG_HOME 优先, 兼容 FG_HOME, 缺省 D:/comate。\"\"\"
+    \"\"\"受管根目录: env COMATE_FG_HOME 优先, 兼容 FG_HOME, 缺省 %USERPROFILE%/comate。\"\"\"
     return Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or FALLBACK_HOME)
 
 

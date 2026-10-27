@@ -5,7 +5,7 @@
 背景（2026-10-23）：命令内联代码经"命令行→PowerShell→解释器"多层解析必吞引号
 （引号铁律）。本工具让"读 JSON"类操作零引号零内联：
     python scripts/cquery.py <文件> [<点分键路径>]
-    python scripts/cquery.py D:\\comate\\_rules\\global-rules.json rules.dir_type_map
+    python scripts/cquery.py %USERPROFILE%\\comate\\_rules\\global-rules.json rules.dir_type_map
     python scripts/cquery.py project_meta.json dirs
     python scripts/cquery.py project_meta.json dirs.src        # 数组元素支持索引
 """

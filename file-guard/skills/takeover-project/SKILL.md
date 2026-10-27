@@ -38,12 +38,12 @@ description: 当用户说"接手一个项目 / 接管 XX / 把 XX 纳入管理 /
 
 ## 第五步：登记（受管转正）
 
-1. 写 `<managed-root>\_rules\managed-projects.json`（root/type/category/window/status/since/note）
-2. `python <managed-root>\products\file-guard\scripts\ignore-gen.py --write`（给全部登记项目生成 .comateignore）
+1. 写 `%USERPROFILE%\comate\_rules\managed-projects.json`（root/type/category/window/status/since/note）
+2. `python %USERPROFILE%\comate\products\file-guard\scripts\ignore-gen.py --write`（给全部登记项目生成 .comateignore）
 
 ## 第六步：复检 + 汇报
 
-- `python <managed-root>\products\file-guard\scripts\doctor.py` 全绿（D5 含新项目；**D12 校验适用项目 _checkpoint 白名单，type=kb / checkpoint_enabled=false 豁免**）
+- `python %USERPROFILE%\comate\products\file-guard\scripts\doctor.py` 全绿（D5 含新项目；**D12 校验适用项目 _checkpoint 白名单，type=kb / checkpoint_enabled=false 豁免**）
 - 汇报：登记条目、.comateignore、掰正明细、进度档案迁移明细、后续自管理说明
 
 ## 注意

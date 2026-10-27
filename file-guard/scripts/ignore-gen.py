@@ -15,7 +15,7 @@
   python ignore-gen.py --check     # 校验已生成文件与当前规则是否一致（doctor D10 用）
 
 规则来源（单一真源）:
-  - C0: D:\\comate\\_rules\\global-rules.json -> rules.blacklisted_names.file（正则，启发式转 glob）
+  - C0: %USERPROFILE%\\comate\\_rules\\global-rules.json -> rules.blacklisted_names.file（正则，启发式转 glob）
   - 内置敏感文件清单（原沙箱 denyRead 语义）
   - _trash / .git 隔离
 
@@ -35,13 +35,13 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
     except Exception:
         pass
 
-COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 RULES_PATH = COMATE_FG_HOME / "_rules" / "global-rules.json"  # 2026-10-27 去硬编码：随 COMATE_FG_HOME 派生
 REGISTRY_PATH = RULES_PATH.parent / "managed-projects.json"  # 受管登记表（P1 定案 2026-10-23）
 USERPROFILE = Path(os.environ.get("USERPROFILE", ""))
 
 HEADER = """# FileGuard 引擎级拦截规则（.comateignore，不依赖 Comate hooks）
-# 由 scripts/ignore-gen.py 生成维护；单一真源：D:\\comate\\_rules\\global-rules.json (C0)
+# 由 scripts/ignore-gen.py 生成维护；单一真源：%USERPROFILE%\\comate\\_rules\\global-rules.json (C0)
 # 注意：.comateignore 同时拦截读和写（引擎 FsPermissionService，热更新生效）
 """
 

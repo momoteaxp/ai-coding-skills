@@ -4,13 +4,13 @@
 
 ## 这些工具解决什么问题
 
-- **文件落错地方** → [FileGuard (Comate) 插件套件](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3)：写前拦截 + 引擎兜底，让 AI 写不进不该写的地方
+- **文件落错地方** → [FileGuard (Comate) 插件套件](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3+build.1)：写前拦截 + 引擎兜底，让 AI 写不进不该写的地方
 
 ## 产品列表
 
 | 产品 | 适用客户端 | 最新版本 | 下载 |
 |---|---|---|---|
-| [file-guard-comate](https://github.com/momoteaxp/ai-coding-skills/tree/main/file-guard) | Comate | v0.6.3 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3) |
+| [file-guard-comate](https://github.com/momoteaxp/ai-coding-skills/tree/main/file-guard) | Comate | v0.6.3+build.1 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3+build.1) |
 
 ## 使用说明
 

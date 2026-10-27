@@ -8,11 +8,11 @@
 import os
 from pathlib import Path
 
-FALLBACK_HOME = "D:/comate"
+FALLBACK_HOME = str(Path.home() / "comate")
 
 
 def fg_home() -> Path:
-    """受管根目录: env COMATE_FG_HOME 优先, 兼容 FG_HOME, 缺省 D:/comate。"""
+    """受管根目录: env COMATE_FG_HOME 优先, 兼容 FG_HOME, 缺省 %USERPROFILE%/comate。"""
     return Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or FALLBACK_HOME)
 
 

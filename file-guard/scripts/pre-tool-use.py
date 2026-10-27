@@ -42,7 +42,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
         pass
 
 # ---- comate 侧受管根（环境变量可覆盖） ----
-COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 META_NAME = "project_meta.json"
 MAX_META_DEPTH = 2
 # 引擎实际工具名（2026-10-23 校准：Comate 引擎为 Agent 风格小写名，

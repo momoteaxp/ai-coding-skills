@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FileGuard Trash CLI — 管理 <FG_HOME>\\_trash 回收站（comate 侧缺省 D:\\comate；2026-10-27 修正 project 残留默认）
+FileGuard Trash CLI — 管理 <FG_HOME>\\_trash 回收站（comate 侧缺省 %USERPROFILE%\\comate；2026-10-27 修正 project 残留默认）
 
 用法：
   python trash-cli.py list [--days N]           # 列出 trash 内容
@@ -21,8 +21,8 @@ import argparse
 from pathlib import Path
 from datetime import datetime, timedelta
 
-# 根目录支持 COMATE_FG_HOME/FG_HOME 环境变量覆盖（换机/换盘时无需改代码）；缺省回退 D:/comate（comate 套件侧；原 project 残留已修正）
-FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+# 根目录支持 COMATE_FG_HOME/FG_HOME 环境变量覆盖（换机/换盘时无需改代码）；缺省回退 %USERPROFILE%/comate（comate 套件侧；原 project 残留已修正）
+FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 TRASH_ROOT = FG_HOME / "_trash"
 FG_ROOT = FG_HOME
 

@@ -8,7 +8,7 @@
     R2 版本一致: plugin.json.version == project_meta.json.version
     R3 git 状态: 工作树 clean（有未提交改动则提醒，不阻断）
     R4 L4 comate 计划任务 3 个均已注册
-    R5 规则文件存在且可解析（D:\\comate\\_rules\\global-rules.json，comate 独立规则）
+    R5 规则文件存在且可解析（%USERPROFILE%\\comate\\_rules\\global-rules.json，comate 独立规则）
 
 用法: python scripts/pre-reboot-check.py
 退出码: 0 = 全部通过；1 = 存在失败项（重启前应修复）
@@ -26,7 +26,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
         pass
 
 PROJ_ROOT = Path(__file__).parent.parent.resolve()
-COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 FAILS: list[str] = []
 
 

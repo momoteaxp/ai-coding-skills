@@ -3,7 +3,7 @@
   "label": "FileGuard (Comate) 插件套件",
   "type": "suite",
   "description": "comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skill + .comateignore 引擎级兜底 + new-project skill），独立单源（2026-10-23 脱离原基准，enforcer.py/init.py/checkpoint-manager.py/规则文件均在 comate 侧）",
-  "version": "0.6.3",
+  "version": "0.6.3+build.1",
   "release_name": "file-guard-comate",
   "delivery_policy": "公开上传：仅经统一发版工具发布（套件自身不推送、不内置上传能力）；源码公开（MIT）",
   "publish_exclude": [
@@ -25,9 +25,9 @@
     "安装自适应：部署时询问受管根、按实际路径生成 hooks，不写死盘符",
     "Windows 深度集成：junction 挂载 + 计划任务归位，开箱即用"
   ],
-  "quickstart": "1. 挂载并配置：powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1（按提示填写受管根）\n2. 体检：python scripts/doctor.py（D1-D12 全绿）\n3. 新建受管项目：python scripts/new-project.py <name> --type skill",
+  "quickstart": "1. 挂载并配置：powershell -ExecutionPolicy Bypass -File scripts/first-run.ps1（自动检测受管根，可 -Yes 跳过确认）\n2. 体检：python scripts/doctor.py（D1-D12 全绿）\n3. 新建受管项目：python scripts/new-project.py <name> --type skill",
   "usage": "日常使用 /new-project 建项目、/takeover-project 接手项目、/fileguard-doctor 体检。发布统一走 github-publish，本套件自身不含上传能力。",
-  "requirements": "- Windows 10/11（hooks、计划任务、junction 依赖 Windows）\n- Comate 客户端（插件目录 ~/.comate/plugins）\n- Python 3.10+ / PowerShell 5.1+\n- 受管根安装时询问（默认 D:/comate，保存为用户环境变量 COMATE_FG_HOME）\n- 安装 L4 计划任务需管理员权限",
+  "requirements": "- Windows 10/11（hooks、计划任务、junction 依赖 Windows）\n- Comate 客户端（插件目录 ~/.comate/plugins）\n- Python 3.10+ / PowerShell 5.1+\n- 受管根安装时询问（默认 %USERPROFILE%/comate，保存为用户环境变量 COMATE_FG_HOME）\n- 安装 L4 计划任务需管理员权限",
   "platform": "Windows",
   "structure": "file-guard/\n├─ hooks/        hooks.template.json（公开；hooks.json 部署时生成）\n├─ scripts/      enforcer / doctor / new-project / build-release 等\n├─ skills/       new-project / takeover-project / fileguard-doctor\n├─ rules/ templates/ docs/ _checkpoint/ release/",
   "dirs": {

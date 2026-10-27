@@ -1,0 +1,6 @@
+{
+  "_note": "示例：复制到 %APPDATA%\\FileGuard\\config.json；或直接运行 scripts\\first-run.ps1",
+  "managed_root": "%USERPROFILE%\\comate",
+  "source": "config",
+  "updated": "2026-10-27T00:00:00"
+}

@@ -3,10 +3,10 @@
 """FileGuard (Comate) — 一键新建受管项目
 
 独立单源：直接调用本套件 scripts/init.py，
-类型模板由 init.py 从 C0 rules.dir_type_map 派生（经 D:\\comate\\_rules 独立规则文件）。
+类型模板由 init.py 从 C0 rules.dir_type_map 派生（经 %USERPROFILE%\\comate\\_rules 独立规则文件）。
 
 本脚本只做 comate 侧差异处理：
-  1. 父目录默认 COMATE_FG_HOME\\products（即 D:\\comate\\products）
+  1. 父目录默认 COMATE_FG_HOME\\products（即 %USERPROFILE%\\comate\\products）
   2. 项目名强制英文小写短横线（设计决策 #3：comate 侧不用中文目录名）
   3. 设置 FG_HOME=COMATE_FG_HOME 后透传 --type/--root/--force 给 init.py
 
@@ -28,7 +28,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
     except Exception:
         pass
 
-COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 DEFAULT_ROOT = COMATE_FG_HOME / "products"
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 

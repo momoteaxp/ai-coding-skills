@@ -16,8 +16,8 @@ $ErrorActionPreference = "Stop"
 $scriptsDir = $PSScriptRoot
 $guardVbs   = Join-Path $scriptsDir "guard-launcher.vbs"
 $watchdogVbs = Join-Path $scriptsDir "watchdog-launcher.vbs"
-# 受管根：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 D:\comate
-$fgHome = if ($env:COMATE_FG_HOME) { $env:COMATE_FG_HOME } elseif ($env:FG_HOME) { $env:FG_HOME } else { "D:\comate" }
+# 受管根：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 $env:USERPROFILE\comate
+$fgHome = if ($env:COMATE_FG_HOME) { $env:COMATE_FG_HOME } elseif ($env:FG_HOME) { $env:FG_HOME } else { "$env:USERPROFILE\comate" }
 
 function Test-Admin {
   $id   = [Security.Principal.WindowsIdentity]::GetCurrent()

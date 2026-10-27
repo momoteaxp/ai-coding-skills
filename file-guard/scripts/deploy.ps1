@@ -2,7 +2,7 @@
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\scripts\deploy.ps1
-#   powershell -ExecutionPolicy Bypass -File .\scripts\deploy.ps1 -FgHome "E:\comate" -NonInteractive
+#   powershell -ExecutionPolicy Bypass -File .\scripts\deploy.ps1 -FgHome "$env:USERPROFILE\comate" -NonInteractive
 #
 # What it does:
 #   1) mount this suite directory as ~/.comate/plugins/file-guard (junction)
@@ -32,10 +32,10 @@ if (-not (Test-Path (Join-Path $src "plugin.json"))) {
 # --- 1) managed root (asked unless provided) ---
 if (-not $FgHome) {
     if ($NonInteractive) {
-        $FgHome = "D:\comate"
+        $FgHome = Join-Path $env:USERPROFILE "comate"
     } else {
-        $answer = Read-Host "Managed root directory (where managed projects live) [D:\comate]"
-        if ($answer) { $FgHome = $answer } else { $FgHome = "D:\comate" }
+        $answer = Read-Host "Managed root directory (where managed projects live) [$env:USERPROFILE\comate]"
+        if ($answer) { $FgHome = $answer } else { $FgHome = Join-Path $env:USERPROFILE "comate" }
     }
 }
 $FgHome = $FgHome.TrimEnd('\')

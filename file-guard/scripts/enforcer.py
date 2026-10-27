@@ -22,8 +22,8 @@ import re
 import sys
 from pathlib import Path
 
-# ---- 常量（COMATE_FG_HOME 优先，兼容 FG_HOME，缺省回退 D:/comate——2026-10-23 独立化） ----
-ROOT = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+# ---- 常量（COMATE_FG_HOME 优先，兼容 FG_HOME，缺省回退 %USERPROFILE%/comate——2026-10-23 独立化） ----
+ROOT = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 META_NAME = "project_meta.json"
 MAX_META_DEPTH = 2
 TRASH_PATTERN = re.compile(r"/_trash(/|$)")
@@ -305,7 +305,7 @@ def main() -> int:
 
     # list
     p_list = sub.add_parser("list", help="列出受管根目录下的所有项目")
-    p_list.add_argument("--root", "-r", default=str(ROOT), help="受管根目录（默认 D:\\comate）")
+    p_list.add_argument("--root", "-r", default=str(ROOT), help="受管根目录（默认 %USERPROFILE%\\comate）")
 
     args = ap.parse_args()
 

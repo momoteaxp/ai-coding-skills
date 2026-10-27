@@ -9,8 +9,8 @@
 param([switch]$DryRun, [switch]$ScanOnce)
 
 $global:FG_DRYRUN = [bool]$DryRun
-# 根目录从环境变量读取：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 D:\comate（comate 套件独立，2026-10-23）
-$global:FG_ROOT = if ($env:COMATE_FG_HOME) { $env:COMATE_FG_HOME } elseif ($env:FG_HOME) { $env:FG_HOME } else { "D:\comate" }
+# 根目录从环境变量读取：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 $env:USERPROFILE\comate（comate 套件独立，2026-10-23）
+$global:FG_ROOT = if ($env:COMATE_FG_HOME) { $env:COMATE_FG_HOME } elseif ($env:FG_HOME) { $env:FG_HOME } else { "$env:USERPROFILE\comate" }
 $global:FG_SCRATCH = Join-Path $FG_ROOT "_scratch\auto"
 $global:FG_LOG     = Join-Path $FG_ROOT "_rules\placement-log.md"
 
@@ -25,7 +25,7 @@ if (Test-Path $rulesPath) {
   $global:FG_ALLOWED = @("_rules","_scratch","_trash","_archive","scripts","inbox")
 }
 
-# 动态识别项目目录：D:\comate 一级目录中带 project_meta.json 的即为受管项目（规则是数据）
+# 动态识别项目目录：$env:USERPROFILE\comate 一级目录中带 project_meta.json 的即为受管项目（规则是数据）
 $global:FG_PROJECTS = Get-ChildItem -LiteralPath $FG_ROOT -Directory -ErrorAction SilentlyContinue |
   Where-Object { Test-Path (Join-Path $_.FullName "project_meta.json") } |
   ForEach-Object { $_.Name }

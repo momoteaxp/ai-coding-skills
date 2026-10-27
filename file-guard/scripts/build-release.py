@@ -104,7 +104,7 @@ def gate_self_compliance() -> bool:
     r = run(["git", "-c", "core.quotepath=false", "ls-files", "-z"], check=False)
     files = [f for f in r.stdout.split("\x00") if f]
     env = dict(os.environ)
-    resolved_home = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+    resolved_home = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
     env["COMATE_FG_HOME"] = str(resolved_home)
     env["FG_HOME"] = str(resolved_home)
     bad = []

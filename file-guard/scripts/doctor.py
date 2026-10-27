@@ -10,7 +10,7 @@
   D5 项目登记   受管登记表 managed-projects.json 各项目 meta 可解析 + .comateignore 已生成（空表=WARN，新装机正常；缺表/空表回退受管根两层扫描）
   D6 L3 钩子    comate 项目 .git/hooks/pre-commit 是否安装（非 git / zip 安装=WARN，不阻断）
   D7 L4 FSW     comate 侧 3 计划任务是否注册（可选增强项；未注册=WARN，不阻断体检）
-  D8 环境变量   生效受管根 = COMATE_FG_HOME→FG_HOME→D:\\comate（显示实际值）
+  D8 环境变量   生效受管根 = COMATE_FG_HOME→FG_HOME→%USERPROFILE%\\comate（显示实际值）
   D9 版本一致性 版本行清单（project_meta/plugin/SKILL 等）全部一致
   D10 引擎级拦截 .comateignore 与 ignore-gen.py 生成内容一致（不依赖 hooks 的拦截通道）
   D11 漏网项目 受管根 products 下无 project_meta.json 的目录（含已登记项目的容器目录除外）/ 已建 meta 未登记的目录 / 登记表指向不存在的目录——三类都主动告警（防手工建项目绕过入口再漏网，2026-10-26 incident 事件；2026-10-27 容器目录豁免，如 github/github-release-skill）
@@ -35,7 +35,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
         pass
 
 PLUGIN_DIR = Path(__file__).resolve().parent.parent  # 套件根（scripts/..）；2026-10-27 去硬编码，与 build-release 同口径
-COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or r"D:\comate")
+COMATE_FG_HOME = Path(os.environ.get("COMATE_FG_HOME") or os.environ.get("FG_HOME") or str(Path.home() / "comate"))
 USERPROFILE = Path(os.environ.get("USERPROFILE", ""))
 PLUGIN_LINK = USERPROFILE / ".comate" / "plugins" / "file-guard"
 
@@ -262,10 +262,10 @@ def main() -> int:
     except Exception as e:
         warn(f"D7 L4 计划任务 检查异常（不阻断体检）: {e}")
 
-    # D8 环境变量（显示实际生效值；统一 COMATE_FG_HOME→FG_HOME→D:\comate）
+    # D8 环境变量（显示实际生效值；统一 COMATE_FG_HOME→FG_HOME→%USERPROFILE%\comate）
     comate_env = os.environ.get("COMATE_FG_HOME") or ""
     fg_env = os.environ.get("FG_HOME") or ""
-    effective_home = comate_env or fg_env or r"D:\comate"
+    effective_home = comate_env or fg_env or str(Path.home() / "comate")
     ok(
         "D8 环境变量 "
         f"生效受管根={effective_home} | "

@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.6.3-green.svg)](https://github.com/momoteaxp/free/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.3+build.1-green.svg)](https://github.com/momoteaxp/free/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#requirements)
 
 [English](README.md) | [中文](README.zh-CN.md)
@@ -49,7 +49,7 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 
 ## Quick Start
 
-1. 挂载并配置：powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1（按提示填写受管根）
+1. 挂载并配置：powershell -ExecutionPolicy Bypass -File scripts/first-run.ps1（自动检测受管根，可 -Yes 跳过确认）
 2. 体检：python scripts/doctor.py（D1-D12 全绿）
 3. 新建受管项目：python scripts/new-project.py <name> --type skill
 
@@ -64,7 +64,7 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 - Windows 10/11（hooks、计划任务、junction 依赖 Windows）
 - Comate 客户端（插件目录 ~/.comate/plugins）
 - Python 3.10+ / PowerShell 5.1+
-- 受管根安装时询问（默认 <managed-root>，保存为用户环境变量 COMATE_FG_HOME）
+- 受管根安装时询问（默认 %USERPROFILE%/comate，保存为用户环境变量 COMATE_FG_HOME）
 - 安装 L4 计划任务需管理员权限
 
 ## FAQ

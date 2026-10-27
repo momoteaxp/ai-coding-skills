@@ -27,21 +27,21 @@ description: 当用户说要"新建一个项目 / 新项目 / 建个项目 / 创
 命名规则：**英文小写短横线**（如 `travel-guide-ppt`、`weak-current-ops`）；new-project.py 会强制校验。
 
 ```bash
-python <managed-root>\products\file-guard\scripts\new-project.py <项目名> --type <细类>
+python %USERPROFILE%\comate\products\file-guard\scripts\new-project.py <项目名> --type <细类>
 ```
 
 示例：
 ```bash
-python <managed-root>\products\file-guard\scripts\new-project.py travel-guide-ppt --type skill
+python %USERPROFILE%\comate\products\file-guard\scripts\new-project.py travel-guide-ppt --type skill
 ```
 
-默认父目录 `<managed-root>\products`；可用 `--root <父目录>` 改。旧别名 `A/B/C` 兼容（A→software、B→skill、C→docgen）。
+默认父目录 `%USERPROFILE%\comate\products`；可用 `--root <父目录>` 改。旧别名 `A/B/C` 兼容（A→software、B→skill、C→docgen）。
 
 ## 第三步：建完自动做的事（脚本已内置，无需手动）
 
 1. 按细类模板建全部目录 + 初始文件（project_meta.json、_索引.md、README、版本规范、checkpoint 三件套、L3 pre-commit、版本工具 version_check/build-release）
 2. git init + 首次提交
-3. **自动登记**进 `<managed-root>\_rules\managed-projects.json`（中央登记表）
+3. **自动登记**进 `%USERPROFILE%\comate\_rules\managed-projects.json`（中央登记表）
 4. **自动生成** `.comateignore`（引擎级拦截兜底）
 
 ## 第四步：验收清单（向用户汇报）

@@ -1,11 +1,11 @@
 Set WshShell = CreateObject("WScript.Shell")
 Set Fso = CreateObject("Scripting.FileSystemObject")
 
-' 受管根：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 D:\comate
+' 受管根：COMATE_FG_HOME 优先，兼容 FG_HOME，缺省 %USERPROFILE%\comate
 Dim fgHome
 fgHome = WshShell.Environment("Process")("COMATE_FG_HOME")
 If fgHome = "" Then fgHome = WshShell.Environment("Process")("FG_HOME")
-If fgHome = "" Then fgHome = "D:\comate"
+If fgHome = "" Then fgHome = "%USERPROFILE%\comate"
 WshShell.Environment("Process")("FG_HOME") = fgHome
 
 ' Get the directory of this vbs script (scripts dir)
