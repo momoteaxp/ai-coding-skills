@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.6.2-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.3-green.svg)](https://github.com/momoteaxp/free/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#环境要求)
 
 [中文](README.zh-CN.md) | [English](README.md)
@@ -17,6 +17,20 @@
 comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skill + .comateignore 引擎级兜底 + new-project skill），独立单源（2026-10-23 脱离原基准，enforcer.py/init.py/checkpoint-manager.py/规则文件均在 comate 侧）
 
 **适合谁**：在 Comate 中做 AI 辅助开发、希望文件写入有护栏、项目结构统一、跨窗口不丢进度的开发者
+
+
+<!-- MESSAGE-STRATEGY:START -->
+## 这个项目解决什么问题
+
+> 一句话定位：面向 Comate 开发者，FileGuard 是一套项目管理套件：写前拦截 + 引擎兜底，让 AI 写不进不该写的地方。
+
+在 Comate 中做 AI 辅助开发、希望文件写入有护栏、项目结构统一、跨窗口不丢进度的开发者，下面这些场景可能很熟悉：
+
+- **文件落错地方**：AI 写代码很快，但它不知道你的目录规则。FileGuard 在写入前检查目录白名单、只读清单和敏感文件，违规直接拒绝；就算 hooks 被关掉，还有 .comateignore 引擎层兜底。
+- **版本号对不上**：版本号散落在 meta、plugin、README、SKILL 里，手工同步迟早出错。FileGuard 在体检和发版门禁里逐个文件比对版本，不一致就拒绝发版。
+- **项目串台 / 端口冲突**：多个项目并行时，目录、端口、配置最容易串。FileGuard 给每个项目独立的规则和路径派生，跨项目读取默认拦截，需要时走显式通道，避免 AI 把两个项目混在一起。
+
+<!-- MESSAGE-STRATEGY:END -->
 
 ## 核心特性
 
@@ -58,24 +72,24 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 <details>
 <summary>安装或运行遇到问题怎么办？</summary>
 
-先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases)。
+先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/free/releases)。
 
 </details>
 
 <details>
 <summary>如何确认自己用的是最新版本？</summary>
 
-打开 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
+打开 [Releases](https://github.com/momoteaxp/free/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
 
 </details>
 
 ## 更新记录
 
-每次发版都会在 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面附中英双语变更说明。
+每次发版都会在 [Releases](https://github.com/momoteaxp/free/releases) 页面附中英双语变更说明。
 
 ## 反馈与联系
 
-- 问题反馈：https://github.com/momoteaxp/ai-coding-skills/issues
+- 问题反馈：https://github.com/momoteaxp/free/issues
 
 ## 项目结构
 
@@ -93,7 +107,7 @@ file-guard/
 
 - https://ghproxy.net/
 - https://ghfast.top/
-- https://cdn.jsdelivr.net/gh/momoteaxp/ai-coding-skills@
+- https://cdn.jsdelivr.net/gh/momoteaxp/free@
 
 ## License
 

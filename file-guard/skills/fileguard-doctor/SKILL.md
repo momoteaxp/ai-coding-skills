@@ -1,6 +1,6 @@
 ---
 name: fileguard-doctor
-version: 0.6.2
+version: 0.6.3
 description: FileGuard 套件体检与受管项目管理。当用户想检查 FileGuard(comate) 插件是否正常工作、想对新项目做"套件体检"（登记目录白名单/命名规则/只读清单）、想在 comate 侧一键新建受管项目、或想了解当前受管项目状态时使用。
 ---
 
@@ -25,7 +25,7 @@ python <managed-root>\products\file-guard\scripts\new-project.py <name> --type A
 ```
 python <managed-root>\products\file-guard\scripts\doctor.py
 ```
-检查项：D1 插件挂载（junction + plugin.json）｜D2 钩子配置（PreToolUse 引擎工具名 + PreCompact，命令无引号）｜D3 核心复用（scripts/enforcer.py 存在）｜D4 规则层（`_rules\global-rules.json` 存在且可解析）｜D5 项目登记（meta 可解析；空表=WARN，新装机正常）｜D6 L3 pre-commit（git 仓库适用；zip 安装=WARN）｜D7 L4 FSW 计划任务（可选增强，未注册=WARN 不阻断）｜D8 环境变量生效值（显示实际受管根）｜D9 版本一致性（版本行清单全一致）｜D10 引擎级拦截（.comateignore 与 ignore-gen.py 一致）｜D11 漏网项目扫描（受管根无 meta 目录 / 有 meta 未登记 / 登记失效）｜D12 进度体系前提（登记项目 meta 含 `_checkpoint` 白名单）。退出码 0=无失败项（告警不阻断），1=存在失败项。
+检查项：D1 插件挂载（junction + plugin.json）｜D2 钩子配置（PreToolUse 引擎工具名 + PreCompact，命令无引号）｜D3 核心复用（scripts/enforcer.py 存在）｜D4 规则层（`_rules\global-rules.json` 存在且可解析）｜D5 项目登记（meta 可解析；空表=WARN，新装机正常）｜D6 L3 pre-commit（git 仓库适用；zip 安装=WARN）｜D7 L4 FSW 计划任务（可选增强，未注册=WARN 不阻断）｜D8 环境变量生效值（显示实际受管根）｜D9 版本一致性（版本行清单全一致）｜D10 引擎级拦截（.comateignore 与 ignore-gen.py 一致）｜D11 漏网项目扫描（受管根无 meta 目录 / 有 meta 未登记 / 登记失效）｜D12 进度体系前提（适用项目 meta 含 `_checkpoint` 白名单；type=kb 或 `checkpoint_enabled: false` 豁免）。退出码 0=无失败项（告警不阻断），1=存在失败项。
 
 ## 拦截通道（2026-10-23 校准后双通道）
 - **hooks 通道**：PreToolUse → `scripts/pre-tool-use.py` → `scripts/enforcer.py`（写前拦截：C0 黑名单 / _trash / 只读 / 目录白名单）+ checkpoint 跨项目读取拦截。引擎工具名必须用小写 Agent 名（write_file/edit_file/delete_file/apply_patch/read_file/grep_content/glob_path/list_dir/read_lints/run_command），command 必须无内层引号（Node spawn cmd /s /c 会搞乱引号）。
@@ -42,7 +42,7 @@ python <managed-root>\products\file-guard\scripts\doctor.py
 - **版本一致性**：`python scripts/version_check.py`（校验，exit 0/1）；`--sync <版本>`（同步版本行，真源 project_meta.json 除外）。新增带版本的文件时在 version_check.py 的 VERSION_SOURCES 登记。
 - **重启前检查**：`python scripts/pre-reboot-check.py`（R1 doctor 全绿 / R2 版本一致 / R3 工作树 clean / R4 L4 任务已注册 / R5 规则文件存在可解析），exit 0 才建议重启。
 - **L1 权限（sandbox.json）**：已按官方 schema 落盘（`.comate/sandbox.json` + 全局），但 **Comate 4.13.4 Windows 端 sandboxAuto 不可选**（UI 隐藏），denyRead/denyWrite 不生效；敏感隔离由 `.comateignore` 承担（见上）。
-- **L4 comate 归位**：`powershell -ExecutionPolicy Bypass -File scripts/register-comate-guard-task.ps1`（自提升管理员）注册 3 个任务：Comate Placement Guard（常驻，登录+唤醒触发）/ - ScanOnce（5min 兜底）/ - Watchdog（2min 探活重启）。launcher 内置 `FG_HOME=<managed-root>`，guard 心跳 `<managed-root>\_rules\placement-guard.heartbeat`。卸载：Unregister-ScheduledTask 三个任务（见脚本头注释）。
+- **L4 comate 归位**：`powershell -ExecutionPolicy Bypass -File scripts/register-comate-guard-task.ps1`（自提升管理员）注册 3 个任务：Comate Placement Guard（常驻，登录+唤醒触发）/ - ScanOnce（5min 兜底）/ - Watchdog（2min 探活重启）。受管根按 `COMATE_FG_HOME→FG_HOME→<managed-root>` 解析，guard 心跳 `<managed-root>\_rules\placement-guard.heartbeat`。卸载：Unregister-ScheduledTask 三个任务（见脚本头注释）。
 - **_scratch / _trash 清理**：comate 侧未做自动 TTL 清理（原基准的 scratch-clean/trash-cli 未迁移；guard-config 中 L4ScratchCleanTime/L4TrashCleanTime 为历史声明，2026-10-23 已移除）。当前手动管理：`_scratch` 临时文件随手清、`_trash` 丢弃文件定期清。
 
 ## 体检步骤

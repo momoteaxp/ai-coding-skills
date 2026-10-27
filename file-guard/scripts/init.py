@@ -249,6 +249,11 @@ def load_type_templates() -> dict:
 
 TEMPLATES = load_type_templates()
 
+# 2026-10-27 通用豁免：kb 是纯数据目录，没有窗口调用 checkpoint，不生成 _checkpoint 死配置
+if "kb" in TEMPLATES:
+    TEMPLATES["kb"]["dirs"] = [d for d in TEMPLATES["kb"].get("dirs", []) if d != "_checkpoint"]
+    (TEMPLATES["kb"].get("dirs_meta") or {}).pop("_checkpoint", None)
+
 # 旧类型别名（与 C0 rules.type_aliases 一致；C0 读取失败时内置兜底）
 ALIAS_FALLBACK = {"A": "software", "B": "skill", "C": "docgen"}
 
@@ -317,6 +322,9 @@ def project_meta(name: str, ptype: str, label: str, note: str, root_rel: str) ->
         "strict_mode": t.get("strict_mode", True),
         "note": "修改本文件需经用户确认；AI 放置规则由 FileGuard L2 插件读取",
     }
+    if ptype == "kb":
+        # 纯数据项目：无窗口调用 checkpoint，显式声明豁免（doctor D12 读取）
+        meta["checkpoint_enabled"] = False
     return meta
 
 
@@ -443,6 +451,10 @@ def assemble(proj: Path, ptype: str, meta: dict, suite_root: Path) -> tuple[list
     spec = list(ASSEMBLY_SPEC)
     if ptype in ("skill", "docgen", "suite"):
         spec.append(("tmpl", "templates/SKILL.project.md", "SKILL.md"))
+    # 2026-10-27 通用豁免：kb / checkpoint_enabled=false 不创建 _checkpoint（无消费方，避免死配置）
+    cp_enabled = meta.get("checkpoint_enabled", True)
+    if ptype == "kb" or cp_enabled is False or str(cp_enabled).strip().lower() == "false":
+        spec = [s for s in spec if not (s[0] == "mkdir" and s[2] == "_checkpoint/")]
     dirs_keys = list((meta.get("dirs") or {}).keys()) if isinstance(meta.get("dirs"), dict) else list(meta.get("dirs") or [])
     for kind, src_rel, dst_rel in spec:
         if kind == "mkdir":

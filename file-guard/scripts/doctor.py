@@ -14,7 +14,7 @@
   D9 版本一致性 版本行清单（project_meta/plugin/SKILL 等）全部一致
   D10 引擎级拦截 .comateignore 与 ignore-gen.py 生成内容一致（不依赖 hooks 的拦截通道）
   D11 漏网项目 受管根 products 下无 project_meta.json 的目录（含已登记项目的容器目录除外）/ 已建 meta 未登记的目录 / 登记表指向不存在的目录——三类都主动告警（防手工建项目绕过入口再漏网，2026-10-26 incident 事件；2026-10-27 容器目录豁免，如 github/github-release-skill）
-  D12 进度体系前提 登记项目 meta 必须含 _checkpoint 白名单（否则 checkpoint-manager save 被拦、进度档案被迫自创，2026-10-27 incident CHECKPOINT.md 事件）
+  D12 进度体系前提 适用项目 meta 必须含 _checkpoint 白名单（type=kb 或 checkpoint_enabled=false 的纯数据项目豁免，不强制回填）
 
 用法: python doctor.py
 退出码: 0 = 全部通过；1 = 存在失败项（stderr 见明细）
@@ -336,12 +336,15 @@ def main() -> int:
     except Exception as e:
         fail(f"D11 漏网项目扫描 检查异常: {e}")
 
-    # D12 进度体系前提（2026-10-27：incident 事件后补——登记项目 meta 必须含 _checkpoint 白名单，
-    # 否则标准 checkpoint 流程（checkpoint-manager save）会被拦截，进度档案被迫自创根级文件）
+    # D12 进度体系前提（2026-10-27：incident 事件后补——适用项目 meta 必须含 _checkpoint 白名单，
+    # 否则标准 checkpoint 流程（checkpoint-manager save）会被拦截，进度档案被迫自创根级文件。
+    # 2026-10-27 通用豁免：type=kb 或 checkpoint_enabled=false 的纯数据项目没有 checkpoint 消费方，
+    # 不强制回填 _checkpoint，避免产生死配置）
     try:
         reg_path = COMATE_FG_HOME / "_rules" / "managed-projects.json"
         reg = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.is_file() else {"projects": []}
         bad_dirs: list[str] = []
+        skipped: list[str] = []
         for p in reg.get("projects", []):
             rp = Path(p.get("root", ""))
             mp = rp / "project_meta.json"
@@ -352,13 +355,23 @@ def main() -> int:
             except Exception:
                 bad_dirs.append(f"{rp.name}(meta 解析失败)")
                 continue
+            cp_enabled = m.get("checkpoint_enabled", p.get("checkpoint_enabled", True))
+            if cp_enabled is False or str(cp_enabled).strip().lower() == "false":
+                skipped.append(f"{rp.name}(checkpoint_enabled=false)")
+                continue
+            ptype = str(m.get("type") or p.get("type") or "").strip().lower()
+            if ptype == "kb":
+                skipped.append(f"{rp.name}(type=kb)")
+                continue
             if "_checkpoint" not in (m.get("dirs") or {}):
                 bad_dirs.append(rp.name)
         if bad_dirs:
             fail("D12 进度体系前提：以下登记项目 meta 缺 _checkpoint 白名单（标准 checkpoint 流程会被拦，"
-                 "进度档案将被迫自创根级文件）: " + "、".join(bad_dirs))
+                 "进度档案将被迫自创根级文件）: " + "、".join(bad_dirs)
+                 + (f"；已豁免 {len(skipped)} 个：{'、'.join(skipped)}" if skipped else ""))
         else:
-            ok("D12 进度体系前提：全部登记项目 meta 含 _checkpoint 白名单")
+            ok("D12 进度体系前提：全部适用项目 meta 含 _checkpoint 白名单"
+               + (f"（豁免 {len(skipped)} 个：{'、'.join(skipped)}）" if skipped else ""))
     except Exception as e:
         fail(f"D12 进度体系前提 检查异常: {e}")
 

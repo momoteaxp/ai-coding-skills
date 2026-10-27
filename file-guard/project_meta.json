@@ -3,7 +3,7 @@
   "label": "FileGuard (Comate) 插件套件",
   "type": "suite",
   "description": "comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skill + .comateignore 引擎级兜底 + new-project skill），独立单源（2026-10-23 脱离原基准，enforcer.py/init.py/checkpoint-manager.py/规则文件均在 comate 侧）",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "release_name": "file-guard-comate",
   "delivery_policy": "公开上传：仅经统一发版工具发布（套件自身不推送、不内置上传能力）；源码公开（MIT）",
   "publish_exclude": [
@@ -82,5 +82,8 @@
   "trash_dir": "_trash",
   "trash_ttl_days": 30,
   "strict_mode": true,
-  "note": "本文件修改需经用户确认；AI 放置规则由 FileGuard(comate) 写前拦截读取（scripts/enforcer.py 独立单源）；新目录/扩展名按 C0 规则模板补登记（rules/global-rules.json 独立文件）"
+  "note": "本文件修改需经用户确认；AI 放置规则由 FileGuard(comate) 写前拦截读取（scripts/enforcer.py 独立单源）；新目录/扩展名按 C0 规则模板补登记（rules/global-rules.json 独立文件）",
+  "clients": [
+    "Comate"
+  ]
 }

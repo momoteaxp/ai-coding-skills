@@ -33,8 +33,8 @@ description: 当用户说"接手一个项目 / 接管 XX / 把 XX 纳入管理 /
 - 回填：补 README/_索引/版本规范/`.comate` 白名单（**不覆盖既有内容**，只增不改）
 - 掰正：命名/白名单/版本号——每项列**确切改动路径与内容**，用户确认后改；**未经确认不做任何代码级改动**
 - 类型若需掰正（如 B→docgen）单独列为确认项
-- **硬规则（2026-10-27 incident 教训）**：meta.dirs 白名单 = **实际目录 ∪ 标准目录**——`_checkpoint`/`docs`/`_scratch`/`_trash`/`.comate` 必登记（按类型取舍）。只登记实际目录会让标准 checkpoint 流程（checkpoint-manager save）被自己拦，进度档案被迫自创根级文件。
-- **进度档案迁移**（审计第 6 项命中时）：拆两份——机器可读字段（版本/阶段/测试结果/下一步/待确认）→ `_checkpoint/latest.json`（`checkpoint-manager.py save`，需显式 `--session-id`）；人读档案（文件清单/设计决策/未验证假设/交付物/变更记录）→ `docs/进度档案.md`（内容保真，只加迁移头注）；迁移后删根级自创文件并从 `root_file_name_rule` 移除对应例外。
+- **硬规则（2026-10-27 incident 教训 + kb 豁免）**：有辅助窗口/进度需求的项目，meta.dirs 白名单 = **实际目录 ∪ 标准目录**——`_checkpoint`/`docs`/`_scratch`/`_trash`/`.comate` 必登记；**纯数据项目（type=kb 或 `checkpoint_enabled: false`）豁免 `_checkpoint`**，不要强行回填管理骨架（没有 checkpoint 消费方，只会产生死配置）。
+- **进度档案迁移**（审计第 6 项命中时，且项目未豁免 checkpoint）：拆两份——机器可读字段（版本/阶段/测试结果/下一步/待确认）→ `_checkpoint/latest.json`（`checkpoint-manager.py save`，需显式 `--session-id`）；人读档案（文件清单/设计决策/未验证假设/交付物/变更记录）→ `docs/进度档案.md`（内容保真，只加迁移头注）；迁移后删根级自创文件并从 `root_file_name_rule` 移除对应例外。
 
 ## 第五步：登记（受管转正）
 
@@ -43,7 +43,7 @@ description: 当用户说"接手一个项目 / 接管 XX / 把 XX 纳入管理 /
 
 ## 第六步：复检 + 汇报
 
-- `python <managed-root>\products\file-guard\scripts\doctor.py` 全绿（D5 含新项目；**D12 校验 _checkpoint 白名单**）
+- `python <managed-root>\products\file-guard\scripts\doctor.py` 全绿（D5 含新项目；**D12 校验适用项目 _checkpoint 白名单，type=kb / checkpoint_enabled=false 豁免**）
 - 汇报：登记条目、.comateignore、掰正明细、进度档案迁移明细、后续自管理说明
 
 ## 注意
