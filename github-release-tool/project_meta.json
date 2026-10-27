@@ -31,7 +31,7 @@
     "Comate"
   ],
   "structure": "github-release-tool/\n├─ scripts/   scan / audit / sanitize / fix / publish / doctor\n├─ skills/    github-publish（客户端 skill）\n├─ config/    release-config / publish-projects\n├─ data/      release-manifest（发布历史）\n└─ _build/    构建区（不上传，可随时重建）",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "dirs": {
     "_checkpoint": [
       "*.json"

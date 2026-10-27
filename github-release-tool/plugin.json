@@ -1,6 +1,6 @@
 {
   "name": "github-release-tool",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "GitHub 发版工具 — 统一发版通道 skill（github-publish）：审核受管项目发版资格 → 补齐纠正 → 一条龙发布到 GitHub Releases",
   "author": {
     "name": "github-release-tool"

@@ -7,7 +7,7 @@
 **适用客户端**：Comate
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.1.3-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
+[![Version](https://img.shields.io/badge/version-v0.1.4-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Client](https://img.shields.io/badge/client-comate-purple.svg)](#环境要求)
 [![Platform](https://img.shields.io/badge/platform-Cross-platform-lightgrey.svg)](#环境要求)
 

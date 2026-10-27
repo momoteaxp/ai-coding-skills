@@ -44,7 +44,10 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
 from fnmatch import fnmatch
 
 from _paths import PROJ_ROOT, config_path, manifest_path  # noqa: E402
-import transforms  # noqa: E402
+try:
+    import transforms  # noqa: E402
+except Exception:
+    transforms = None
 
 SANITIZE = PROJ_ROOT / "scripts" / "sanitize.py"
 FIX = PROJ_ROOT / "scripts" / "fix.py"
@@ -287,7 +290,10 @@ def stage_product(root: Path, meta: dict, cfg: dict, ver: str) -> Path:
     apply_replacements(staging, ov.get("replacements", []) or [])
     # 在副本应用结构化转换（如移除 kb 功能）
     for tname in ov.get("transforms", []) or []:
-        transforms.apply(tname, staging)
+        if transforms:
+            transforms.apply(tname, staging)
+        else:
+            print(f"[WARN] transforms 未装配，跳过: {tname}")
 
     # 在副本补齐 README/LICENSE（fix.py --no-recheck，源不动）
     r = run([sys.executable, str(FIX), str(staging), "--version", ver, "--no-recheck"],

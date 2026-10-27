@@ -1,6 +1,6 @@
 ---
 name: github-publish
-version: 0.1.4
+version: 0.1.5
 description: 统一 GitHub 发版通道（一条龙）：扫描客户端下所有受管项目 → 审计发版资格（文件/结构/版本/内容）→ 补齐纠正（双语 README/License/版本对齐）→ 脚本化发布到 GitHub Releases（打 tag + 双语 release notes + 源码包/资产，公开可下载）。适用于：发版、发布、发个 release、审核发版资格、检查能不能发版、缺 README/LICENSE、补齐后发布、把项目发布到 GitHub、发布套件/skill/插件等场景。
 ---
 
@@ -98,7 +98,7 @@ python scripts\release.py status [<源项目根>]  # 查看保险锁/版本/发�
 ## 配置（config/release-config.json）
 
 - `github.owner`：已回填 `momoteaxp`
-- `github.default_repo`：已回填 `free`（单仓库形态，所有产物发往 `momoteaxp/ai-coding-skills`）
+- `github.default_repo`：已回填 `ai-coding-skills`（单仓库形态，所有产物发往 `momoteaxp/ai-coding-skills`）
 - `license.holder`：已回填 `momoteaxp`
 - `publish.enabled`：发布保险锁（默认 `false`，只允许 dry-run）
 - `publish.docs_policy`：`internal`（默认，`docs/**` 不进公开副本）
