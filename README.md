@@ -7,7 +7,6 @@
 | 产品 | 适用客户端 | 最新版本 | 下载 |
 |---|---|---|---|
 | [file-guard-comate](https://github.com/momoteaxp/ai-coding-skills/tree/main/file-guard) | Comate | v0.6.2 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.2) |
-| [github-release-tool](https://github.com/momoteaxp/ai-coding-skills/tree/main/github-release-tool) | Comate | v0.1.5 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/github-release-tool-v0.1.5) |
 
 ## 使用说明
 
