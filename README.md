@@ -4,7 +4,7 @@
 
 ## 这些工具解决什么问题
 
-- **文件落错地方** → [FileGuard (Comate) 插件套件](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3+build.1)：写前拦截 + 引擎兜底，让 AI 写不进不该写的地方
+- **[FileGuard (Comate) 插件套件](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.3+build.1)**：文件乱放、版本不同步、项目串台、窗口丢进度、重复建项目<br>→ 写前拦截 / 版本同步 / 项目隔离 / 进度续接 / 一条命令
 
 ## 产品列表
 
