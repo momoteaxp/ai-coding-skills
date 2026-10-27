@@ -35,7 +35,7 @@ python scripts\release.py status [<源项目根>]  # 查看保险锁/版本/发�
 ## 发布架构（原始项目只读 → 发布副本 → 发布区）
 
 ```
-原始项目（只读）  →  publish-ready/<产品>（我们目录下的发布副本）  →  momoteaxp/free/<产品> + Releases
+原始项目（只读）  →  publish-ready/<产品>（我们目录下的发布副本）  →  momoteaxp/ai-coding-skills/<产品> + Releases
 ```
 
 - **原始项目零写入**：不 bump、不 commit、不 tag、不手动 fix；发布流程只读它
@@ -98,7 +98,7 @@ python scripts\release.py status [<源项目根>]  # 查看保险锁/版本/发�
 ## 配置（config/release-config.json）
 
 - `github.owner`：已回填 `momoteaxp`
-- `github.default_repo`：已回填 `free`（单仓库形态，所有产物发往 `momoteaxp/free`）
+- `github.default_repo`：已回填 `free`（单仓库形态，所有产物发往 `momoteaxp/ai-coding-skills`）
 - `license.holder`：已回填 `momoteaxp`
 - `publish.enabled`：发布保险锁（默认 `false`，只允许 dry-run）
 - `publish.docs_policy`：`internal`（默认，`docs/**` 不进公开副本）

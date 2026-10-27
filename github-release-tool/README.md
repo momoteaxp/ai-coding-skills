@@ -7,7 +7,7 @@
 **Works with**: Comate
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.1.4-green.svg)](https://github.com/momoteaxp/free/releases)
+[![Version](https://img.shields.io/badge/version-v0.1.4-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Client](https://img.shields.io/badge/client-comate-purple.svg)](#requirements)
 [![Platform](https://img.shields.io/badge/platform-Cross-platform-lightgrey.svg)](#requirements)
 
@@ -64,7 +64,7 @@ scan.py 看全貌 → publish.py --dry-run 预演 → 确认后 publish.py 发�
 <details>
 <summary>Something went wrong during install or run. What should I do?</summary>
 
-Open an issue in this repository with the error output, your OS version, and reproduction steps. See [Releases](https://github.com/momoteaxp/free/releases) for changes in each version.
+Open an issue in this repository with the error output, your OS version, and reproduction steps. See [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) for changes in each version.
 
 </details>
 
@@ -78,17 +78,17 @@ Check the "Requirements / Usage" sections of this README; projects that involve 
 <details>
 <summary>How do I know I am on the latest version?</summary>
 
-Check the [Releases](https://github.com/momoteaxp/free/releases) page; the version badge at the top of this README also shows the current version.
+Check the [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) page; the version badge at the top of this README also shows the current version.
 
 </details>
 
 ## Changelog
 
-Every release ships with bilingual release notes on the [Releases](https://github.com/momoteaxp/free/releases) page.
+Every release ships with bilingual release notes on the [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) page.
 
 ## Contact
 
-- Issues: https://github.com/momoteaxp/free/issues
+- Issues: https://github.com/momoteaxp/ai-coding-skills/issues
 
 ## Project structure
 
@@ -107,7 +107,7 @@ github-release-tool/
 
 - https://ghproxy.net/
 - https://ghfast.top/
-- https://cdn.jsdelivr.net/gh/momoteaxp/free@
+- https://cdn.jsdelivr.net/gh/momoteaxp/ai-coding-skills@
 
 ## License
 

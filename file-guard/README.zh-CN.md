@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.6.2-green.svg)](https://github.com/momoteaxp/free/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.2-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#环境要求)
 
 [中文](README.zh-CN.md) | [English](README.md)
@@ -58,24 +58,24 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 <details>
 <summary>安装或运行遇到问题怎么办？</summary>
 
-先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/free/releases)。
+先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases)。
 
 </details>
 
 <details>
 <summary>如何确认自己用的是最新版本？</summary>
 
-打开 [Releases](https://github.com/momoteaxp/free/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
+打开 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
 
 </details>
 
 ## 更新记录
 
-每次发版都会在 [Releases](https://github.com/momoteaxp/free/releases) 页面附中英双语变更说明。
+每次发版都会在 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面附中英双语变更说明。
 
 ## 反馈与联系
 
-- 问题反馈：https://github.com/momoteaxp/free/issues
+- 问题反馈：https://github.com/momoteaxp/ai-coding-skills/issues
 
 ## 项目结构
 
@@ -93,7 +93,7 @@ file-guard/
 
 - https://ghproxy.net/
 - https://ghfast.top/
-- https://cdn.jsdelivr.net/gh/momoteaxp/free@
+- https://cdn.jsdelivr.net/gh/momoteaxp/ai-coding-skills@
 
 ## License
 

@@ -7,7 +7,7 @@
 **适用客户端**：Comate
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.1.3-green.svg)](https://github.com/momoteaxp/free/releases)
+[![Version](https://img.shields.io/badge/version-v0.1.3-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Client](https://img.shields.io/badge/client-comate-purple.svg)](#环境要求)
 [![Platform](https://img.shields.io/badge/platform-Cross-platform-lightgrey.svg)](#环境要求)
 
@@ -64,7 +64,7 @@ scan.py 看全貌 → publish.py --dry-run 预演 → 确认后 publish.py 发�
 <details>
 <summary>安装或运行遇到问题怎么办？</summary>
 
-先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/free/releases)。
+先在仓库提 Issue，附上报错信息、操作系统版本和复现步骤。每次发版的变更说明见 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases)。
 
 </details>
 
@@ -78,17 +78,17 @@ scan.py 看全貌 → publish.py --dry-run 预演 → 确认后 publish.py 发�
 <details>
 <summary>如何确认自己用的是最新版本？</summary>
 
-打开 [Releases](https://github.com/momoteaxp/free/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
+打开 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面，最新版本即当前推荐版本；本 README 顶部徽章也会显示版本号。
 
 </details>
 
 ## 更新记录
 
-每次发版都会在 [Releases](https://github.com/momoteaxp/free/releases) 页面附中英双语变更说明。
+每次发版都会在 [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) 页面附中英双语变更说明。
 
 ## 反馈与联系
 
-- 问题反馈：https://github.com/momoteaxp/free/issues
+- 问题反馈：https://github.com/momoteaxp/ai-coding-skills/issues
 
 ## 项目结构
 
@@ -107,7 +107,7 @@ github-release-tool/
 
 - https://ghproxy.net/
 - https://ghfast.top/
-- https://cdn.jsdelivr.net/gh/momoteaxp/free@
+- https://cdn.jsdelivr.net/gh/momoteaxp/ai-coding-skills@
 
 ## License
 

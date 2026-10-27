@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.6.2-green.svg)](https://github.com/momoteaxp/free/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.2-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#requirements)
 
 [English](README.md) | [中文](README.zh-CN.md)
@@ -58,24 +58,24 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 <details>
 <summary>Something went wrong during install or run. What should I do?</summary>
 
-Open an issue in this repository with the error output, your OS version, and reproduction steps. See [Releases](https://github.com/momoteaxp/free/releases) for changes in each version.
+Open an issue in this repository with the error output, your OS version, and reproduction steps. See [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) for changes in each version.
 
 </details>
 
 <details>
 <summary>How do I know I am on the latest version?</summary>
 
-Check the [Releases](https://github.com/momoteaxp/free/releases) page; the version badge at the top of this README also shows the current version.
+Check the [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) page; the version badge at the top of this README also shows the current version.
 
 </details>
 
 ## Changelog
 
-Every release ships with bilingual release notes on the [Releases](https://github.com/momoteaxp/free/releases) page.
+Every release ships with bilingual release notes on the [Releases](https://github.com/momoteaxp/ai-coding-skills/releases) page.
 
 ## Contact
 
-- Issues: https://github.com/momoteaxp/free/issues
+- Issues: https://github.com/momoteaxp/ai-coding-skills/issues
 
 ## Project structure
 
@@ -93,7 +93,7 @@ file-guard/
 
 - https://ghproxy.net/
 - https://ghfast.top/
-- https://cdn.jsdelivr.net/gh/momoteaxp/free@
+- https://cdn.jsdelivr.net/gh/momoteaxp/ai-coding-skills@
 
 ## License
 
