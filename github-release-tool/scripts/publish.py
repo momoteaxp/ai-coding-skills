@@ -24,6 +24,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -40,17 +41,21 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
     except Exception:
         pass
 
+from fnmatch import fnmatch
+
 from _paths import PROJ_ROOT, config_path, manifest_path  # noqa: E402
+import transforms  # noqa: E402
 
 SANITIZE = PROJ_ROOT / "scripts" / "sanitize.py"
 FIX = PROJ_ROOT / "scripts" / "fix.py"
 BUILD_DIR = PROJ_ROOT / "_build"
+PUBLISH_READY = PROJ_ROOT / "publish-ready"
 OVERRIDES_PATH = PROJ_ROOT / "config" / "publish-projects.json"
 
 DEFAULT_EXCLUDE = {".git", "_scratch", "_trash", "_checkpoint", "release",
                    "output", "data", "backup", "archive", "__pycache__",
                    ".pytest_cache", "node_modules", ".comate", "_build",
-                   ".fileguard-sync.json", "_索引.md"}
+                   "publish-ready", ".fileguard-sync.json", "_索引.md"}
 
 
 def run(cmd, cwd, check=True, env=None):
@@ -172,8 +177,10 @@ def last_release(root: Path):
 
 
 def make_tag(meta: dict, ver: str, cfg: dict) -> str:
+    """tag 基名优先用 release_name（含客户端），如 <product>-<client>-v1.0.0。"""
+    base = meta.get("release_name") or meta.get("name", "product")
     pattern = (cfg.get("publish", {}) or {}).get("tag_pattern", "v{version}")
-    return pattern.format(name=meta.get("name", "product"), version=ver)
+    return pattern.format(name=base, version=ver)
 
 
 def fingerprint(staging: Path) -> str:
@@ -186,15 +193,54 @@ def fingerprint(staging: Path) -> str:
     return h.hexdigest()
 
 
+BINARY_SKIP = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".zip", ".exe",
+               ".msi", ".pdf", ".docx", ".pptx", ".xlsx", ".db", ".pyc", ".so",
+               ".dll", ".woff", ".woff2", ".ttf", ".7z", ".gz", ".tar"}
+
+
+def apply_replacements(staging: Path, reps: list):
+    """在发布副本内做文本替换（跨项目痕迹泛化）；不改原始项目。英文按单词边界。"""
+    if not reps:
+        return
+    compiled = []
+    for r in reps:
+        src, dst = r.get("from", ""), r.get("to", "")
+        if not src:
+            continue
+        if re.fullmatch(r"[A-Za-z0-9 _.\-]+", src):
+            pat = re.compile(r"(?<![A-Za-z0-9])" + re.escape(src) + r"(?![A-Za-z0-9])")
+        else:
+            pat = re.compile(re.escape(src))
+        compiled.append((pat, dst, r.get("glob")))
+    changed = 0
+    for p in staging.rglob("*"):
+        if not p.is_file() or p.suffix.lower() in BINARY_SKIP:
+            continue
+        try:
+            text = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        rel = p.relative_to(staging).as_posix()
+        new = text
+        for pat, dst, glob in compiled:
+            if glob and not fnmatch(rel, glob):
+                continue
+            new = pat.sub(dst, new)
+        if new != text:
+            p.write_text(new, encoding="utf-8")
+            changed += 1
+    print(f"[OK] 已应用发布替换 {len(compiled)} 条（命中文件 {changed} 个）")
+
+
 def stage_product(root: Path, meta: dict, cfg: dict, ver: str) -> Path:
-    """从源复制到构建区，应用排除；在副本补齐 README/LICENSE（源不动）。"""
+    """从源复制到发布副本（publish-ready），应用排除与发布元数据覆盖；源不动。"""
     name = meta.get("name") or root.name
-    staging = BUILD_DIR / name
+    staging = PUBLISH_READY / name
     if staging.exists():
         shutil.rmtree(staging)
     staging.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(root, staging, ignore=shutil.ignore_patterns(*DEFAULT_EXCLUDE))
-    print(f"[OK] 已复制源到构建区: {staging}")
+    print(f"[OK] 已生成发布副本: {staging}")
 
     ov = load_overrides(name)
     docs_policy = (cfg.get("publish", {}) or {}).get("docs_policy", "internal")
@@ -229,11 +275,39 @@ def stage_product(root: Path, meta: dict, cfg: dict, ver: str) -> Path:
     if excludes:
         print(f"[OK] 已应用项目排除规则: {excludes}")
 
+    # 在副本应用发布元数据覆盖（发布用的展示字段不写回源）
+    if ov.get("meta_overrides"):
+        mp = staging / "project_meta.json"
+        m = json.loads(mp.read_text(encoding="utf-8"))
+        m.update(ov["meta_overrides"])
+        mp.write_text(json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[OK] 已应用发布元数据覆盖: {list(ov['meta_overrides'].keys())}")
+
+    # 在副本应用跨项目痕迹替换（只改副本，不动原始项目）
+    apply_replacements(staging, ov.get("replacements", []) or [])
+    # 在副本应用结构化转换（如移除 kb 功能）
+    for tname in ov.get("transforms", []) or []:
+        transforms.apply(tname, staging)
+
     # 在副本补齐 README/LICENSE（fix.py --no-recheck，源不动）
     r = run([sys.executable, str(FIX), str(staging), "--version", ver, "--no-recheck"],
             staging, check=False)
     if r.stdout.strip():
         print(r.stdout.strip())
+
+    # 文档类替换（绝对路径/个人目录名），在 README 生成之后执行
+    apply_replacements(staging, ov.get("doc_replacements", []) or [])
+
+    # 记录发布副本状态（放在副本外，避免被发布）
+    state = {
+        "source_root": str(root),
+        "source_version": ver,
+        "generated": str(date.today()),
+        "overrides": list((ov.get("meta_overrides") or {}).keys()),
+        "exclude": list(ov.get("exclude", []) or []),
+    }
+    (PUBLISH_READY / f"{name}.state.json").write_text(
+        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
     return staging
 
 
@@ -304,7 +378,45 @@ def build_notes(root: Path, meta: dict, tag: str) -> Path:
     return p
 
 
-def sync_stage(staging: Path, name: str, tag: str, repo: str, env: dict):
+def render_repo_readme(m: dict, repo: str) -> str:
+    """生成仓库根 README（产品列表 + 适用客户端），提升可发现性。"""
+    latest = {}
+    for r in m.get("releases", []):
+        if r.get("draft"):
+            continue
+        key = r.get("root")
+        cur = latest.get(key)
+        if cur is None or _ver_tuple(r.get("version")) > _ver_tuple(cur.get("version")):
+            latest[key] = r
+    lines = [
+        f"# {repo} — AI 编码技能 / 套件发布仓库",
+        "",
+        "> 自研套件、skill、插件与工具的统一发布仓库；按客户端/环境标识，源码公开（MIT）。",
+        "",
+        "## 产品列表",
+        "",
+        "| 产品 | 适用客户端 | 最新版本 | 下载 |",
+        "|---|---|---|---|",
+    ]
+    for r in sorted(latest.values(), key=lambda x: (x.get("release") or x.get("name") or "")):
+        folder = r.get("name") or Path(r.get("root", "")).name
+        name = r.get("release") or folder
+        clients = r.get("clients")
+        client = " / ".join(clients) if clients else (r.get("client") or "Any")
+        lines.append(f"| [{name}](https://github.com/{repo}/tree/main/{folder}) | {client} | "
+                     f"v{r.get('version')} | [Release]({r.get('url')}) |")
+    lines += [
+        "",
+        "## 使用说明",
+        "",
+        "- 每个产品独立版本与 tag；源码与发布 zip 同源。",
+        "- 国内下载：在 Release 链接前加 `https://ghproxy.net/` 镜像前缀。",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def sync_stage(staging: Path, name: str, tag: str, repo: str, env: dict, repo_readme: str = ""):
     cache = BUILD_DIR / "repos" / repo.replace("/", "__")
     if not (cache / ".git").exists():
         cache.parent.mkdir(parents=True, exist_ok=True)
@@ -322,6 +434,9 @@ def sync_stage(staging: Path, name: str, tag: str, repo: str, env: dict):
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(staging, dest)
+
+    if repo_readme:
+        (cache / "README.md").write_text(repo_readme, encoding="utf-8")
 
     run(["git", "-C", str(cache), "add", "-A"], PROJ_ROOT, env=env)
     st = run(["git", "-C", str(cache), "status", "--porcelain"], PROJ_ROOT, check=False, env=env)
@@ -349,6 +464,7 @@ def main() -> int:
     ap.add_argument("--draft", action="store_true", help="发布为草稿")
     ap.add_argument("--dry-run", action="store_true", help="只构建+校验，不 push 不建 release")
     ap.add_argument("--skip-sanitize", action="store_true")
+    ap.add_argument("--skip-version-gate", action="store_true", help="准备阶段跳过指纹/版本门禁（不上传时用）")
     ap.add_argument("--force", action="store_true", help="忽略发布保险锁（publish.enabled=false）")
     args = ap.parse_args()
 
@@ -390,7 +506,10 @@ def main() -> int:
 
     # 4 版本纪律（指纹）
     fp = fingerprint(staging)
-    fingerprint_gate(root, fp, ver)
+    if args.skip_version_gate:
+        print("[WARN] 已跳过版本门禁（prepare 模式）")
+    else:
+        fingerprint_gate(root, fp, ver)
 
     # 5 打包（从构建区）
     zip_path = zip_stage(staging, meta, ver)
@@ -414,12 +533,38 @@ def main() -> int:
     if not gh:
         print("[FAIL] 未找到 gh CLI")
         return 1
-    auth = run([gh, "auth", "status"], PROJ_ROOT, check=False, env=env)
-    if auth.returncode != 0:
-        print("[FAIL] gh 未认证（gh auth login）")
+    auth_ok = False
+    auth = None
+    for i in range(3):
+        auth = run([gh, "auth", "status"], PROJ_ROOT, check=False, env=env)
+        if auth.returncode == 0:
+            auth_ok = True
+            break
+        if i < 2:
+            print(f"[RETRY] gh 认证/网络检查失败，{2 * (i + 1)}s 后重试...")
+            time.sleep(2 * (i + 1))
+    if not auth_ok:
+        print("[FAIL] gh 未认证或网络不可达（先 gh auth login；国内检查代理）")
+        if auth and auth.stderr.strip():
+            print(f"  stderr: {auth.stderr.strip()[:200]}")
         return 1
 
-    sync_stage(staging, name, tag, repo, env)
+    clients = meta.get("clients")
+    if not clients:
+        clients = [meta.get("client")] if meta.get("client") else ["Any"]
+    clients = [str(c) for c in clients if c]
+    record = {
+        "root": str(root), "version": ver, "tag": tag, "repo": repo,
+        "url": f"https://github.com/{repo}/releases/tag/{tag}",
+        "published": str(date.today()), "draft": args.draft,
+        "source_fingerprint": fp, "staging": str(staging),
+        "name": name, "release": meta.get("release_name") or name,
+        "client": " / ".join(clients), "clients": clients,
+    }
+    manifest = load_manifest()
+    preview = {"releases": list(manifest.get("releases", [])) + [record]}
+    repo_readme = render_repo_readme(preview, repo)
+    sync_stage(staging, name, tag, repo, env, repo_readme)
 
     notes = build_notes(root, meta, tag)
     cmd = [gh, "release", "create", tag, "--repo", repo, "--title", tag,
@@ -432,12 +577,7 @@ def main() -> int:
             hint=f"源码与 tag 已推送；网络恢复后可手动创建：gh release create {tag} --repo {repo} --title {tag} --notes-file {notes} {zip_path}")
 
     manifest = load_manifest()
-    manifest["releases"].append({
-        "root": str(root), "version": ver, "tag": tag, "repo": repo,
-        "url": f"https://github.com/{repo}/releases/tag/{tag}",
-        "published": str(date.today()), "draft": args.draft,
-        "source_fingerprint": fp, "staging": str(staging),
-    })
+    manifest["releases"].append(record)
     save_manifest(manifest)
 
     print("\n=== 发布完成 ===")

@@ -32,7 +32,9 @@ SENSITIVE = [
     "credentials.json", "credentials*.json", "secrets.*", "secrets*.json",
     "id_rsa", "id_ed25519", "*.npmrc", "*.p8",
 ]
-EXCLUDE_DIRS = {".git", "_trash", "_checkpoint", "node_modules", "__pycache__"}
+EXCLUDE_DIRS = {".git", "_trash", "_checkpoint", "node_modules", "__pycache__",
+                "_build", "publish-ready", "suggestions", "release", "output",
+                "data", "backup", "archive", ".comate", "_scratch"}
 
 
 def item(code, status, message, fixable=False, fix=None):

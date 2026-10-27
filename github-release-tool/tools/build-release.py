@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""FileGuard (Comate) — 一键打包发布（2026-10-23 脱离 dumate 独立化；P2c 通用化）
+"""一键本地打包发布（本地升版本/打包/tag；公开发布由 github-release-tool 统一完成）
 
 用法:
     python scripts/build-release.py --bump patch|minor|major
@@ -148,7 +148,7 @@ def create_zip(version: str) -> Path:
                     "_trash", "_checkpoint", "data", "archive", "_scratch", "release",
                     "_state", "_traces", "decrypted", "backup", "output"}
     # 排除配置的 release 目录本身（2026-10-26 修复：只排除写死的 release/ 会把配置的
-    # release_dir（如 版本包归档）里的旧 zip 甚至新 zip 自身套进包里——知识库窗口报告）
+    # release_dir 里的旧 zip 甚至新 zip 自身套进包里）
     exclude_dirs.add(rel_dir.name)
     exclude_exts = {".bak", ".tmp", ".log", ".db"}
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:

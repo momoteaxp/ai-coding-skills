@@ -13,6 +13,7 @@ LICENSE（MIT），并支持版本行对齐。绝不覆盖已有内容（已存�
 """
 import argparse
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -109,6 +110,18 @@ def main() -> int:
             return value.strip()
         return default
 
+    def client_display() -> str:
+        v = meta.get("clients") or meta.get("client")
+        if isinstance(v, list):
+            return " / ".join(str(x) for x in v if x) or "Any"
+        return str(v) if v else "Any"
+
+    def client_badge() -> str:
+        v = meta.get("clients") or meta.get("client")
+        first = v[0] if isinstance(v, list) and v else (v or "Any")
+        slug = re.sub(r"[^a-z0-9]+", "-", str(first).lower()).strip("-")
+        return slug or "any"
+
     base = {
         "name": meta.get("name", root.name),
         "label": meta.get("label", meta.get("name", root.name)),
@@ -121,6 +134,8 @@ def main() -> int:
         "year": str(date.today().year),
         "mirrors": mirrors,
         "platform": pick("platform", "Any"),
+        "client": client_display(),
+        "client_badge": client_badge(),
         "tree": meta.get("structure") or "（待补充：目录结构）",
     }
 

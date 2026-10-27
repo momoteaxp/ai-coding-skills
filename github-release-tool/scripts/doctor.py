@@ -24,6 +24,7 @@ import os
 import socket
 import subprocess
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -129,23 +130,27 @@ def main() -> int:
     else:
         results.append(item("D3", "WARN", "gh 缺失，跳过"))
 
-    # D4 代理 + API 可达
+    # D4 代理 + API 可达（网络瞬时失败不阻塞本地构建 → WARN）
     api_ok = False
-    try:
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler(
-            {"https": proxy, "http": proxy} if proxy else {}))
-        req = urllib.request.Request("https://api.github.com", headers={"User-Agent": "github-release-tool"})
-        with opener.open(req, timeout=12) as resp:
-            api_ok = resp.status == 200
-    except Exception as e:
-        api_ok = False
-        err = str(e)[:80]
-    if proxy:
-        results.append(item("D4", "PASS" if api_ok else "FAIL",
-                            f"代理 {proxy}；api.github.com 可达={api_ok}" if api_ok else f"代理 {proxy} 但 API 不可达: {err}"))
+    err = ""
+    for attempt in range(3):
+        try:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler(
+                {"https": proxy, "http": proxy} if proxy else {}))
+            req = urllib.request.Request("https://api.github.com", headers={"User-Agent": "github-release-tool"})
+            with opener.open(req, timeout=12) as resp:
+                api_ok = resp.status == 200
+            if api_ok:
+                break
+        except Exception as e:
+            err = str(e)[:80]
+            if attempt < 2:
+                time.sleep(2 * (attempt + 1))
+    if api_ok:
+        results.append(item("D4", "PASS", f"代理 {proxy}；api.github.com 可达" if proxy else "直连 GitHub API 可达"))
     else:
-        results.append(item("D4", "PASS" if api_ok else "FAIL",
-                            "直连 GitHub API 可达" if api_ok else f"无代理且直连不可达: {err}"))
+        results.append(item("D4", "WARN",
+                            f"代理 {proxy} 但 API 暂不可达: {err}" if proxy else f"无代理且直连不可达: {err}"))
 
     # D5 配置
     gh_cfg = cfg.get("github", {}) or {}

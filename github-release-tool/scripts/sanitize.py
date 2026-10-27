@@ -11,7 +11,7 @@ FAIL 阻塞发布；WARN 需人工确认（可加入 config.sanitize.allow_paths
 检查项:
     S1 产物/缓存混入（zip/exe/log/db/pyc 等散落在源码树）
     S2 盘符/绝对路径（D:\\... /Users/... /home/... %USERPROFILE%）
-    S3 跨套件引用（file-guard / FG_HOME / D:\\comate 等，需声明依赖或内联）
+    S3 跨套件引用（FG_HOME / D:\\comate 等，需声明依赖或内联；其他项目名由 S7 检测）
     S4 黑名单词（config.sanitize.denylist：公司名/人名/内部文件名）
     S5 README 结构（特性/快速开始/环境要求/联系 小节）
     S6 敏感文件（.env / key / pem / credentials 等）
@@ -30,11 +30,11 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
     except Exception:
         pass
 
-from _paths import PROJ_ROOT, config_path  # noqa: E402
+from _paths import PROJ_ROOT, config_path, managed_projects_path  # noqa: E402
 
 EXCLUDE_DIRS = {".git", "_trash", "_scratch", "_checkpoint", "node_modules",
                 "__pycache__", "release", "output", "data", "backup", "archive",
-                ".pytest_cache", ".comate"}
+                ".pytest_cache", ".comate", "_build", "publish-ready", "suggestions"}
 BINARY_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".zip", ".exe",
               ".msi", ".pdf", ".docx", ".pptx", ".xlsx", ".db", ".pyc", ".so",
               ".dll", ".woff", ".woff2", ".ttf", ".7z", ".gz", ".tar"}
@@ -42,7 +42,8 @@ ARTIFACT_EXT = {".zip", ".exe", ".msi", ".log", ".db", ".pyc", ".7z", ".tar", ".
 
 ABS_PATH_RE = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]:[\\/][^\s\"'`<>|]*)")
 HOME_PATH_RE = re.compile(r"(/Users/[^\s\"'`]+|/home/[^\s\"'`]+|%USERPROFILE%|\$HOME/)")
-CROSS_RE = re.compile(r"(file-guard|FileGuard|FG_HOME|D:\\\\?comate)", re.IGNORECASE)
+PERSONAL_PATH_RE = re.compile(r"([A-Za-z]:[\\/]Users[\\/][^\\/\s\"'`]+|/home/[^\s\"'`]+)")
+CROSS_RE = re.compile(r"(FG_HOME|D:\\\\?comate)", re.IGNORECASE)
 SENSITIVE_NAME = [
     ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "credentials*.json",
     "secrets.*", "id_rsa", "id_ed25519", "*.npmrc", "*.p8",
@@ -98,6 +99,43 @@ def scan_lines(text: str, regex, limit: int = 15):
     return hits
 
 
+def collect_cross_terms(cfg: dict, meta: dict, root: Path) -> list:
+    """跨项目引用词：受管登记表其他项目名/目录名 + 配置别名，排除自身。"""
+    terms = set()
+    try:
+        d = json.loads(managed_projects_path().read_text(encoding="utf-8"))
+        for p in d.get("projects", []):
+            if p.get("status") != "active":
+                continue
+            rp = Path(p.get("root", ""))
+            if str(rp).lower() == str(root).lower():
+                continue
+            if rp.name:
+                terms.add(rp.name)
+    except Exception:
+        pass
+    for t in (cfg.get("sanitize", {}) or {}).get("cross_project_terms", []) or []:
+        if t:
+            terms.add(t)
+    try:
+        extra = json.loads((PROJ_ROOT / "config" / "sanitize-terms.json").read_text(encoding="utf-8"))
+        for t in extra.get("cross_project_terms", []) or []:
+            if t:
+                terms.add(t)
+    except Exception:
+        pass
+    self_key = (meta.get("name") or "").lower()
+    return sorted({t for t in terms if t and t.lower() != self_key and self_key not in t.lower()},
+                  key=len, reverse=True)
+
+
+def term_pattern(t: str):
+    """英文/数字词按单词边界匹配（避免缩写命中普通单词）；中文按子串匹配。"""
+    if re.fullmatch(r"[A-Za-z0-9 _.\-]+", t):
+        return re.compile(r"(?<![A-Za-z0-9])" + re.escape(t) + r"(?![A-Za-z0-9])", re.IGNORECASE)
+    return re.compile(re.escape(t), re.IGNORECASE)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="github-release-tool 发版前净化审核")
     ap.add_argument("root", help="项目根目录")
@@ -136,14 +174,21 @@ def main() -> int:
     else:
         results.append(item("S1", "PASS", "无产物/缓存混入"))
 
-    # S2 盘符/绝对路径
+    # S2 盘符/绝对路径（个人用户目录 = FAIL；其他绝对路径 = WARN）
     abs_hits = []
+    personal_hits = []
     for rel, p, text in iter_text_files(root, allow_paths):
         for ln, line in scan_lines(text, ABS_PATH_RE, 3):
             abs_hits.append(f"{rel}:{ln}: {line}")
         for ln, line in scan_lines(text, HOME_PATH_RE, 3):
             abs_hits.append(f"{rel}:{ln}: {line}")
-    if abs_hits:
+        for ln, line in scan_lines(text, PERSONAL_PATH_RE, 5):
+            personal_hits.append(f"{rel}:{ln}: {line}")
+    if personal_hits:
+        results.append(item("S2", "FAIL",
+                            f"发现个人用户目录路径 {len(personal_hits)} 处（必须替换为 %USERPROFILE% / 相对路径）:\n      "
+                            + "\n      ".join(personal_hits[:10])))
+    elif abs_hits:
         results.append(item("S2", "WARN", f"发现绝对路径 {len(abs_hits)} 处（公开前建议改相对路径/配置项）:\n      " + "\n      ".join(abs_hits[:10])))
     else:
         results.append(item("S2", "PASS", "无盘符/绝对路径"))
@@ -190,6 +235,23 @@ def main() -> int:
         results.append(item("S5", "WARN", f"README 结构不完整（fix.py 可生成模板）: {missing}"))
     else:
         results.append(item("S5", "PASS", "README 结构完整（特性/快速开始/环境要求/联系）"))
+
+    # S7 跨项目引用（其他受管项目名 / 别名 / 联动痕迹）
+    cross_terms = collect_cross_terms(cfg, meta, root)
+    cross_hits = []
+    if cross_terms:
+        patterns = [(t, term_pattern(t)) for t in cross_terms]
+        for rel, p, text in iter_text_files(root, allow_paths):
+            for term, pat in patterns:
+                if pat.search(text):
+                    for ln, line in scan_lines(text, pat, 2):
+                        cross_hits.append(f"{rel}:{ln}: [{term}] {line}")
+    if cross_hits:
+        results.append(item("S7", "FAIL",
+                            f"发现跨项目引用 {len(cross_hits)} 处（公开前必须去除/泛化；词表 {len(cross_terms)} 个）:\n      "
+                            + "\n      ".join(cross_hits[:12])))
+    else:
+        results.append(item("S7", "PASS", f"无跨项目引用（词表 {len(cross_terms)} 个）"))
 
     # S6 敏感文件
     sens = []

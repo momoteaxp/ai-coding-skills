@@ -4,8 +4,11 @@
 
 **{tagline}**
 
+**Works with**: {client}
+
 [![License](https://img.shields.io/badge/license-{license}-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v{version}-green.svg)](https://github.com/{owner}/{repo}/releases)
+[![Client](https://img.shields.io/badge/client-{client_badge}-purple.svg)](#requirements)
 [![Platform](https://img.shields.io/badge/platform-{platform}-lightgrey.svg)](#requirements)
 
 [English](README.md) | [中文](README.zh-CN.md)

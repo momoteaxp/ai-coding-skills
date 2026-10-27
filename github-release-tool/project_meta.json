@@ -27,8 +27,11 @@
   "usage": "scan.py 看全貌 → publish.py --dry-run 预演 → 确认后 publish.py 发布；audit / sanitize / fix 可按需单独诊断（详见 README 与 SKILL.md）。",
   "requirements": "- Windows / Linux / macOS（脚本为 Python，发布流程跨平台）\n- Python 3.10+\n- GitHub CLI（gh）并完成 gh auth login\n- 国内上传需代理（脚本自动探测，或配置 china_network.proxy）",
   "platform": "Cross-platform",
+  "clients": [
+    "Comate"
+  ],
   "structure": "github-release-tool/\n├─ scripts/   scan / audit / sanitize / fix / publish / doctor\n├─ skills/    github-publish（客户端 skill）\n├─ config/    release-config / publish-projects\n├─ data/      release-manifest（发布历史）\n└─ _build/    构建区（不上传，可随时重建）",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "dirs": {
     "_checkpoint": [
       "*.json"

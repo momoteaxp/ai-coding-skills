@@ -19,11 +19,3 @@ def fg_home() -> Path:
 def rules_dir() -> Path:
     """C0 规则目录（全局唯一规则真源）: fg_home()/_rules。"""
     return fg_home() / "_rules"
-
-
-def suite_dir() -> Path:
-    """套件目录: env FILEGUARD_SUITE_SUBDIR / FG_SUITE_REL 覆盖, 缺省 产品/file-guard。"""
-    rel = (os.environ.get("FILEGUARD_SUITE_SUBDIR")
-           or os.environ.get("FG_SUITE_REL")
-           or "产品/file-guard")
-    return fg_home() / rel

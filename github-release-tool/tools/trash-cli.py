@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FileGuard Trash CLI — 管理 <FG_HOME>\\_trash 回收站（comate 侧缺省 D:\\comate；2026-10-27 修正 dumate 残留默认）
+FileGuard Trash CLI — 管理 <FG_HOME>\\_trash 回收站（comate 侧缺省 D:\\comate）
 
 用法：
   python trash-cli.py list [--days N]           # 列出 trash 内容
@@ -21,10 +21,10 @@ import argparse
 from pathlib import Path
 from datetime import datetime, timedelta
 
-# 根目录支持 FG_HOME 环境变量覆盖（换机/换盘时无需改代码）；缺省回退 D:/comate（comate 套件侧；原 dumate 残留已修正）
+# 根目录支持 FG_HOME 环境变量覆盖（换机/换盘时无需改代码）；缺省回退 D:/comate
 FG_HOME = Path(os.environ.get("FG_HOME", r"D:\comate"))
 TRASH_ROOT = FG_HOME / "_trash"
-DUMATE_ROOT = FG_HOME
+FG_ROOT = FG_HOME
 
 # ---- Windows 保留设备名兜底回收（nul 清理兜底）----
 # 规则源：C0 rules.reserved_device_names.names（与 enforcer.js RESERVED_DEVICE_FALLBACK
@@ -162,7 +162,7 @@ def restore(target):
                 else:
                     origin_rel = rel
                 
-                dst = DUMATE_ROOT / origin_rel
+                dst = FG_ROOT / origin_rel
                 
                 # 防覆盖：目标已存在则跳过
                 if dst.exists():
@@ -194,7 +194,7 @@ def restore(target):
         else:
             origin_rel = rel
         
-        dst = DUMATE_ROOT / origin_rel
+        dst = FG_ROOT / origin_rel
         if dst.exists():
             print(f"[FileGuard] 错误：目标已存在 {dst}，请先处理冲突")
             sys.exit(1)

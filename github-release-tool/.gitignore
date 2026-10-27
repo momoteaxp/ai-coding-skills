@@ -8,6 +8,8 @@ _scratch/
 _trash/
 _checkpoint/
 _build/
+publish-ready/
+suggestions/
 release/
 output/
 data/*.log

@@ -16,13 +16,18 @@
   },
   "sanitize": {
     "denylist": [],
+    "cross_project_terms": [],
     "allow_paths": [
-      "docs/环境与配置.md"
+      "docs/环境与配置.md",
+      "config/sanitize-terms.json",
+      "config/project-suggestions.json",
+      "scripts/sanitize.py",
+      "scripts/transforms.py"
     ]
   },
   "publish": {
     "enabled": false,
-    "staging_dir": "_build",
+    "staging_dir": "publish-ready",
     "docs_policy": "internal",
     "tag_pattern": "{name}-v{version}"
   },

@@ -8,7 +8,7 @@ git-watchdog.py — FileGuard 持续 git 管理 / 里程碑提交提醒
   - auto    ：在 auto_commit_scenes 匹配的 milestone 场景下自动提交
 
 用法（命令行）：
-    python tools/git-watchdog.py --project D:/dumate/产品/skill/cad-inspection [--scene migrate]
+    python tools/git-watchdog.py --project D:/path/to/project [--scene migrate]
 
 用法（导入）：
     from git_watchdog import check_status, suggest_commit_msg

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""FileGuard (Comate) — 版本一致性校验（发版门禁 + doctor D9 共用）
+"""版本一致性校验（发版门禁 + doctor D9 共用）
 
-背景（2026-10-22 反馈）：发版时文档版本行（如 SKILL.md metadata.version）未与
-project_meta.json 同步导致版本漂移（promo-brochure-skill v0.2.1 事件；同类遗漏历史
-已有记录）。版本规范要求"文档版本行全部与 meta 同步"但缺校验器——本模块补上。
+背景：发版时文档版本行（如 SKILL.md metadata.version）未与 project_meta.json
+同步导致版本漂移；版本规范要求"文档版本行全部与 meta 同步"，本模块补上校验与同步。
 
 功能:
     check: 登记"版本行文件清单"，正则提取各文件版本号与 project_meta.json 对比，

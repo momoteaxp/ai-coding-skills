@@ -4,8 +4,11 @@
 
 **{tagline}**
 
+**适用客户端**：{client}
+
 [![License](https://img.shields.io/badge/license-{license}-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v{version}-green.svg)](https://github.com/{owner}/{repo}/releases)
+[![Client](https://img.shields.io/badge/client-{client_badge}-purple.svg)](#环境要求)
 [![Platform](https://img.shields.io/badge/platform-{platform}-lightgrey.svg)](#环境要求)
 
 [中文](README.zh-CN.md) | [English](README.md)
