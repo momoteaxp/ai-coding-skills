@@ -1,4 +1,4 @@
-# momoteaxp/free — AI 编码技能 / 套件发布仓库
+# momoteaxp/ai-coding-skills — AI 编码技能 / 套件发布仓库
 
 > 自研套件、skill、插件与工具的统一发布仓库；按客户端/环境标识，源码公开（MIT）。
 
@@ -6,8 +6,8 @@
 
 | 产品 | 适用客户端 | 最新版本 | 下载 |
 |---|---|---|---|
-| [file-guard-comate](https://github.com/momoteaxp/free/tree/main/file-guard) | Comate | v0.6.2 | [Release](https://github.com/momoteaxp/free/releases/tag/file-guard-v0.6.2) |
-| [github-release-tool](https://github.com/momoteaxp/free/tree/main/github-release-tool) | Comate | v0.1.4 | [Release](https://github.com/momoteaxp/free/releases/tag/github-release-tool-v0.1.4) |
+| [file-guard-comate](https://github.com/momoteaxp/ai-coding-skills/tree/main/file-guard) | Comate | v0.6.2 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/file-guard-comate-v0.6.2) |
+| [github-release-tool](https://github.com/momoteaxp/ai-coding-skills/tree/main/github-release-tool) | Comate | v0.1.4 | [Release](https://github.com/momoteaxp/ai-coding-skills/releases/tag/github-release-tool-v0.1.4) |
 
 ## 使用说明
 
