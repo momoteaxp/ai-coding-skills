@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updated": "2026-10-27",
+  "github": {
+    "owner": "momoteaxp",
+    "default_repo": "free",
+    "mode": "monorepo",
+    "repo_visibility": "public"
+  },
+  "license": {
+    "spdx": "MIT",
+    "holder": "momoteaxp"
+  },
+  "contact": {
+    "email": ""
+  },
+  "sanitize": {
+    "denylist": [],
+    "allow_paths": [
+      "docs/环境与配置.md"
+    ]
+  },
+  "publish": {
+    "enabled": false,
+    "staging_dir": "_build",
+    "docs_policy": "internal",
+    "tag_pattern": "{name}-v{version}"
+  },
+  "china_network": {
+    "upload_proxy_env": "HTTPS_PROXY",
+    "proxy": "",
+    "download_mirrors": [
+      "https://ghproxy.net/",
+      "https://ghfast.top/",
+      "https://cdn.jsdelivr.net/gh/{owner}/{repo}@"
+    ]
+  }
+}

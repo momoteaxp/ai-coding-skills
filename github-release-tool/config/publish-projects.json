@@ -1,0 +1,15 @@
+{
+  "_note": "逐项目发布覆盖：include 白名单公开文档，exclude 额外排除文件（相对项目根，支持 glob）。源文件不改，只影响构建区。",
+  "file-guard": {
+    "exclude": [
+      "hooks/hooks.json"
+    ],
+    "include": []
+  },
+  "github-release-tool": {
+    "exclude": [
+      "docs/环境与配置.md"
+    ],
+    "include": []
+  }
+}
