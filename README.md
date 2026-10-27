@@ -7,7 +7,7 @@
 | 产品 | 适用客户端 | 最新版本 | 下载 |
 |---|---|---|---|
 | file-guard-comate | Comate | v0.6.2 | [Release](https://github.com/momoteaxp/free/releases/tag/file-guard-v0.6.2) |
-| github-release-tool | Cross-platform CLI | v0.1.3 | [Release](https://github.com/momoteaxp/free/releases/tag/github-release-tool-v0.1.3) |
+| github-release-tool | Comate | v0.1.3 | [Release](https://github.com/momoteaxp/free/releases/tag/github-release-tool-v0.1.3) |
 
 ## 使用说明
 
