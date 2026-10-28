@@ -1,6 +1,6 @@
 ---
 name: fileguard-doctor
-version: 0.6.3+build.2
+version: 0.7.1
 description: FileGuard 套件体检与受管项目管理。当用户想检查 FileGuard(comate) 插件是否正常工作、想对新项目做"套件体检"（登记目录白名单/命名规则/只读清单）、想在 comate 侧一键新建受管项目、或想了解当前受管项目状态时使用。
 ---
 
@@ -25,17 +25,19 @@ python %USERPROFILE%\comate\products\file-guard\scripts\new-project.py <name> --
 ```
 python %USERPROFILE%\comate\products\file-guard\scripts\doctor.py
 ```
-检查项：D1 插件挂载（junction + plugin.json）｜D2 钩子配置（PreToolUse 引擎工具名 + PreCompact，命令无引号）｜D3 核心复用（scripts/enforcer.py 存在）｜D4 规则层（`_rules\global-rules.json` 存在且可解析）｜D5 项目登记（meta 可解析；空表=WARN，新装机正常）｜D6 L3 pre-commit（git 仓库适用；zip 安装=WARN）｜D7 L4 FSW 计划任务（可选增强，未注册=WARN 不阻断）｜D8 环境变量生效值（显示实际受管根）｜D9 版本一致性（版本行清单全一致）｜D10 引擎级拦截（.comateignore 与 ignore-gen.py 一致）｜D11 漏网项目扫描（受管根无 meta 目录 / 有 meta 未登记 / 登记失效）｜D12 进度体系前提（适用项目 meta 含 `_checkpoint` 白名单；type=kb 或 `checkpoint_enabled: false` 豁免）。退出码 0=无失败项（告警不阻断），1=存在失败项。
+检查项：D1 插件挂载（junction + plugin.json）｜D2 钩子配置（PreToolUse 引擎工具名 + PreCompact，命令无引号）｜D3 核心复用（scripts/enforcer.py 存在）｜D4 规则层（`_rules\global-rules.json` 存在且可解析）｜D5 项目登记（meta 可解析；空表=WARN，新装机正常）｜D6 L3 pre-commit（git 仓库适用；zip 安装=WARN）｜D7 L4 FSW 计划任务（可选增强，未注册=WARN 不阻断）｜D8 环境变量生效值（显示实际受管根）｜D9 版本一致性（版本行清单全一致）｜D10 引擎级拦截（.comateignore 与 ignore-gen.py 一致）｜D11 漏网项目扫描（受管根无 meta 目录 / 有 meta 未登记 / 登记失效）｜D12 进度体系前提（适用项目必须有 `_checkpoint` 白名单 + 本地 `tools/checkpoint-manager.py`；type=kb/data 或 `checkpoint_enabled: false` 豁免）。退出码 0=无失败项（告警不阻断），1=存在失败项。
 
 ## 拦截通道（2026-10-23 校准后双通道）
-- **hooks 通道**：PreToolUse → `scripts/pre-tool-use.py` → `scripts/enforcer.py`（写前拦截：C0 黑名单 / _trash / 只读 / 目录白名单）+ checkpoint 跨项目读取拦截。引擎工具名必须用小写 Agent 名（write_file/edit_file/delete_file/apply_patch/read_file/grep_content/glob_path/list_dir/read_lints/run_command），command 必须无内层引号（Node spawn cmd /s /c 会搞乱引号）。
+- **hooks 通道**：PreToolUse → `scripts/pre-tool-use.py` → `scripts/enforcer.py`（写前拦截：C0 黑名单 / _trash / 只读 / 目录白名单）+ checkpoint 裸读/扫描兜底（只放行项目本地 `tools/checkpoint-manager.py`）。引擎工具名必须用小写 Agent 名（write_file/edit_file/delete_file/apply_patch/read_file/grep_content/glob_path/list_dir/read_lints/run_command），command 必须无内层引号（Node spawn cmd /s /c 会搞乱引号）。
 - **引擎级通道（兜底，不依赖 hooks）**：`scripts/ignore-gen.py` 生成 `.comateignore`（引擎 FsPermissionService 在非 sandboxAuto 也生效、热更新、拦读+拦写）。改规则后跑 `ignore-gen.py --write [--global]` 重新生成。
 
-## 跨窗口接续（进度真源 = _checkpoint/latest.json，2026-10-23 分层定案）
-- **保存进度**（会话结束/开新窗口前）：`python %USERPROFILE%\comate\products\file-guard\scripts\checkpoint-manager.py save --project <项目根> --current-task "<一句话>" --pending-tasks "待办1,待办2"`——只写 3-5 行字段，latest.json 即跨窗口接续真源。注：数组参数（--completed-steps/--pending-tasks/--key-decisions）接受 JSON 数组，但 **PowerShell 5.1 原生参数会剥掉含空格 JSON 的内层引号**，故约定用逗号分隔形式（项内不能含逗号）。
-- **接续**（新窗口）：读 `<项目根>\_checkpoint\latest.json`（几行）+ `docs/交接文档-YYYYMMDD.md` 顶部指针区；背景细节按需读正文，不自动全量加载（省 token）。
-- **压缩自动归档**（PreCompact 钩子）：只写元信息审计（kind/project/cwd/timestamp），**不含任务状态**——续接不依赖它；对齐 CHECKPOINT-SCHEMA 铁律"自动通道只是归档者，不是状态写者"，latest.json 已有内容绝不动。
-- 跨项目读 checkpoint 仍受拦截（C0 read_scope=current_project_only），显式逃生通道：`checkpoint-manager.py load --project <目标项目根>`。
+## 跨窗口接续（进度真源 = <项目>/_checkpoint/latest.json，单文件）
+- **保存进度**（会话结束/开新窗口前）：项目内 `python <项目根>\tools\checkpoint-manager.py save --current-task "<一句话>" --pending-tasks "待办1,待办2"`。数组参数用逗号分隔（项内不能含逗号）；脚本只写本项目，**没有 `--project`、`--session-id`、bind**。type=kb/data / `checkpoint_enabled: false` 的项目会拒绝 save。
+- **接续**（新窗口）：项目内 `python <项目根>\tools\checkpoint-manager.py load`。单文件永远返回本项目最新一次交接状态；`status=ok` 才是成功，`not_found`（本项目从未 save）或 `error`（JSON 损坏/项目禁用）必须停下来看 `path`，不要当成空进度继续。
+- **分发/升级**：`python <套件>\scripts\checkpoint-workflow.py --project <项目根>` 或 `--all`。新建、接手、升级同一套步骤：复制标准版 → `tools/checkpoint-manager.py`、建 `_checkpoint/`、补 meta 白名单。kb/data/disabled 自动跳过。
+- **多窗口归档**：完整对话由 Stop hook 写 `_traces/comate/<conversation_id>/session.snapshot.json`，与 checkpoint 完全独立。删窗口前用 `archive-status.py --project <根>` 确认 `OK`；checkpoint 不参与归档，也不按窗口分段。
+- **裸读会被拦**：直接读写 `_checkpoint/latest.json`、扫描受管根、或调用套件 `scripts/checkpoint-manager.py` 做 save/load → hook exit 2；只用项目本地 `tools/checkpoint-manager.py`。
+- **PreCompact**：只提示、不写归档；跨窗口续接走显式 `save/load`。
 
 ## 发版 / 重启检查 / L4 运维（P5-P7）
 - **发版门禁**：`python scripts/build-release.py --bump patch|minor|major`（升版本+提交+tag+打包）或 `--pack-current`（补发当前版本）。门禁：doctor D1-D12 全绿 + 自举合规 0 违规（git 跟踪文件逐个过 enforcer）+ 版本一致（`version_check.py`：project_meta/plugin/README/README.zh-CN/_索引/docs-README/SKILL.md frontmatter 的版本行全部一致，不一致拒绝发版）。bump 会自动同步各版本行。产物 `release/file-guard-comate-vX.Y.Z.zip`（不入库，遵守 meta.publish_exclude）。

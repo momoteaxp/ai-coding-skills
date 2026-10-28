@@ -11,6 +11,7 @@
 用法:
   python ignore-gen.py             # 生成内容到 stdout
   python ignore-gen.py --write     # 写项目级 <FG_HOME 下登记项目>/.comate/.comateignore
+  python ignore-gen.py --write --project <项目根>   # 只写指定项目（new-project 首次提交前用）
   python ignore-gen.py --global    # 同时写全局 ~/.comate/.comateignore
   python ignore-gen.py --check     # 校验已生成文件与当前规则是否一致（doctor D10 用）
 
@@ -120,8 +121,12 @@ def managed_projects() -> list[Path]:
     登记表缺失/损坏/为空时回退 FG_HOME 两层扫描（保兼容，对齐 doctor D5）。"""
     try:
         reg = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-        roots = [Path(p["root"]) for p in (reg.get("projects") or []) if p.get("root")]
-        if roots:
+        reg_projects = reg.get("projects") or []
+        roots = [Path(p["root"]) for p in reg_projects
+                 if p.get("root")
+                 and str(p.get("type") or "").strip().lower() != "data"
+                 and p.get("managed") is not False]
+        if reg_projects:
             return list(dict.fromkeys(roots))
     except Exception:
         pass
@@ -134,11 +139,12 @@ def managed_projects() -> list[Path]:
     return found
 
 
-def write_project() -> list[Path]:
-    """写所有登记项目（引擎实际加载的 workspaceRoots）的 .comateignore。"""
+def write_project(root: Path | None = None) -> list[Path]:
+    """写项目级 .comateignore。root 指定时只写该项目；否则写全部登记项目。"""
     content = build_content()
     written = []
-    for root in managed_projects():
+    roots = [root] if root is not None else managed_projects()
+    for root in roots:
         target = root / ".comate" / ".comateignore"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
@@ -171,7 +177,8 @@ def check_ok() -> tuple[bool, list[str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="FileGuard .comateignore 生成器")
-    ap.add_argument("--write", action="store_true", help="写项目级（FG_HOME 及登记项目）")
+    ap.add_argument("--write", action="store_true", help="写项目级（默认全部登记项目；可配 --project 只写一个）")
+    ap.add_argument("--project", "-p", default="", help="只写指定项目根的 .comateignore（配合 --write）")
     ap.add_argument("--global", dest="gwrite", action="store_true", help="同时写全局 ~/.comate/.comateignore")
     ap.add_argument("--check", action="store_true", help="校验一致性（doctor D10）")
     args = ap.parse_args()
@@ -183,7 +190,7 @@ def main() -> int:
         return 0 if ok else 1
 
     if args.write:
-        written = write_project()
+        written = write_project(Path(args.project) if args.project else None)
         for w in written:
             print(f"[PASS] 已写入 {w}")
         if args.gwrite:

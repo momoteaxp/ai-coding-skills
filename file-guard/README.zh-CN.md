@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.6.3+build.2-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
+[![Version](https://img.shields.io/badge/version-v0.7.1-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#环境要求)
 
 [中文](README.zh-CN.md) | [English](README.md)
@@ -38,9 +38,10 @@ comate 版 FileGuard 套件（PreToolUse 写前拦截 + PreCompact + 体检 skil
 
 - 写前拦截：PreToolUse 钩子按 project_meta.json 规则拦截违规写入（目录白名单/只读/敏感文件）
 - .comateignore 引擎级兜底：不依赖 hooks，引擎层拦读+拦写，热更新
-- 跨窗口续接：checkpoint save/load + 压缩自动归档，进度真源 latest.json
+- 进度续接：项目本地 checkpoint save/load（单文件 latest.json），完整对话由 _traces 归档
 - 一条龙建项目：new-project / takeover-project skill（骨架→登记→验收）
 - 套件体检：doctor D1-D12 自检 + 发版门禁（版本一致 / 自举合规）
+- 自审计与归档确认：audit.py 只读检查过度设计/死代码/漂移；archive-status.py 删窗口前确认归档
 - 本地优先：数据不出本机，无需云端
 
 ## 与同类相比

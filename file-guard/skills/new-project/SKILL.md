@@ -39,7 +39,7 @@ python %USERPROFILE%\comate\products\file-guard\scripts\new-project.py travel-gu
 
 ## 第三步：建完自动做的事（脚本已内置，无需手动）
 
-1. 按细类模板建全部目录 + 初始文件（project_meta.json、_索引.md、README、版本规范、checkpoint 三件套、L3 pre-commit、版本工具 version_check/build-release）
+1. 按细类模板建全部目录 + 初始文件（project_meta.json、_索引.md、README、版本规范、checkpoint 单文件运行时 `tools/checkpoint-manager.py` + `_checkpoint/`、L3 pre-commit、版本工具 version_check/build-release）
 2. git init + 首次提交
 3. **自动登记**进 `%USERPROFILE%\comate\_rules\managed-projects.json`（中央登记表）
 4. **自动生成** `.comateignore`（引擎级拦截兜底）
@@ -55,3 +55,4 @@ python %USERPROFILE%\comate\products\file-guard\scripts\new-project.py travel-gu
 
 - 项目名撞车（已存在）会拒绝；半道接手项目不要用本流程重建，走"接手审计"（审计现状 → 回填 → 掰正 → 登记 → 复检）。
 - 版本号：初始 0.1.0 自动写入；后续发版用项目内 `tools/build-release.py --bump patch|minor|major`。
+- **数据/资料目录**：如果用户明确说“某某目录是素材/资料目录”，不要生成骨架；用 `python <套件>\scripts\register-data.py --path <目录> --create` 只登记为 `type=data`，跳过骨架/checkpoint/tools。

@@ -187,7 +187,9 @@ def verify_zip(zip_path: Path) -> bool:
     required = []
     for rel in ["plugin.json", "project_meta.json", "hooks/hooks.json",
                 "scripts/pre-tool-use.py", "scripts/pre-compact.py",
-                "scripts/doctor.py", "scripts/new-project.py",
+                "scripts/checkpoint-manager.py", "scripts/checkpoint-workflow.py",
+                "scripts/doctor.py", "scripts/new-project.py", "scripts/audit.py",
+                "scripts/audit_deep.py",
                 "scripts/ignore-gen.py", "scripts/enforcer.py"]:
         if any(fnmatch(rel, pat) for pat in publish_exclude):
             continue

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""FileGuard (Comate) — PreCompact 压缩前钩子（归档通道，不含任务状态）
+"""FileGuard (Comate) — PreCompact 压缩前提示（不写归档）
 
-对齐 CHECKPOINT-SCHEMA 铁律：压缩自动通道只是「归档者」，不是「状态写者」——
-latest.json 只写元信息（kind/project/session/cwd/timestamp），绝不写任务状态；压缩续接由客户端
-自带摘要承担（此前"压缩后读 latest.json 恢复上下文"的说法已废弃）。跨窗口进度由 checkpoint-manager.py
-save 显式写入（SKILL"跨窗口接续"节）；latest.json 已存在（存有真实进度）时绝不动，仅缺失时写最小占位。
-当前项目根 = cwd 向上 ≤2 层找 project_meta.json（与 pre-tool-use.py 同口径）。
-
-无论存档是否成功都 exit 0（绝不阻断压缩）；存不了只在 stderr 提示落盘 docs/。
+2026-10-28 清理：PreCompact 自动归档没有消费方，停用写盘，只提示显式 save。
+- 不用 payload cwd；只认 FILEGUARD_CURRENT_DIR
+- type=kb / checkpoint_enabled=false 的项目直接跳过
+- 无论是否提示都 exit 0（绝不阻断压缩）；跨窗口进度由 checkpoint-manager.py save 显式写入。
 """
 import json
 import os
@@ -60,56 +57,36 @@ def main() -> int:
     cwd = payload.get("cwd") or ""
     session = payload.get("session_id") or ""
 
-    if not cwd:
-        print("[file-guard] 压缩前提示: 未提供 cwd，跳过检查点存档。关键结论请落盘 docs/。", file=sys.stderr)
+    # 2026-10-28 根治：payload cwd 不可靠，绝不用它决定项目；只认 FILEGUARD_CURRENT_DIR
+    env_dir = os.environ.get("FILEGUARD_CURRENT_DIR") or ""
+    if not env_dir:
+        print("[file-guard] 压缩前提示: 未提供 FILEGUARD_CURRENT_DIR，跳过检查点存档。关键结论请落盘 docs/。", file=sys.stderr)
         return 0
 
     root = norm(str(COMATE_FG_HOME))
-    target = norm(cwd)
+    target = norm(env_dir)
     if not (target.startswith(root + "/") or target == root):
-        print("[file-guard] 压缩前提示: cwd 在受管根外，跳过检查点存档。", file=sys.stderr)
+        print("[file-guard] 压缩前提示: FILEGUARD_CURRENT_DIR 在受管根外，跳过检查点存档。", file=sys.stderr)
         return 0
 
-    meta = find_meta(Path(cwd))
+    meta = find_meta(Path(env_dir))
     if meta is None:
         print("[file-guard] 压缩前提示: 当前项目未登记规则，跳过检查点存档。", file=sys.stderr)
         return 0
 
-    project_root = meta.parent
-    cp = project_root / CHECKPOINT_DIR
+    # 纯数据/显式关闭 checkpoint 的项目不写（与 D12/checkpoint-manager 豁免一致）
     try:
-        cp.mkdir(parents=True, exist_ok=True)
-        state = {
-            "kind": "precompact-auto",
-            "project": project_root.name,
-            "session_id": session,
-            "cwd": cwd,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "note": "PreCompact 自动归档（审计）：仅元信息，不含任务状态；跨窗口续接请用 checkpoint-manager.py save/load；关键结论请落盘 docs/",
-        }
-        latest = cp / LATEST_FILE
-        if latest.exists():
-            # 铁律（对齐 CHECKPOINT-SCHEMA）：已存在真实进度则绝不动，只追加历史归档
-            print(f"[file-guard] 压缩前提示: latest.json 已有内容，不覆盖（仅归档历史）", file=sys.stderr)
-        else:
-            # 最小占位：v2 多窗口形状（windows 空）；跨窗口续接仍走 checkpoint-manager.py save/load
-            placeholder = {
-                "project": project_root.name,
-                "schema": "v2-windows",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                "windows": {},
-            }
-            latest.write_text(json.dumps(placeholder, ensure_ascii=False, indent=2), encoding="utf-8")
-        hist_name = f"precompact_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.json"
-        hist = cp / hist_name
-        hist.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-        # 保留最近 MAX_HISTORY 份历史（对齐 checkpoint-manager compact 口径）
-        files = sorted(cp.glob("precompact_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for old in files[MAX_HISTORY:]:
-            old.unlink(missing_ok=True)
-        print(f"[file-guard] 压缩前存档完成: {hist.relative_to(project_root)}（会话 {session or 'unknown'}）", file=sys.stderr)
-    except Exception as e:
-        print(f"[file-guard] 压缩前提示: 检查点存档失败（{e}），已放行。关键结论请落盘 docs/。", file=sys.stderr)
+        m = json.loads(meta.read_text(encoding="utf-8"))
+        cp_enabled = m.get("checkpoint_enabled", True)
+        if cp_enabled is False or str(cp_enabled).strip().lower() == "false" \
+                or str(m.get("type") or "").strip().lower() == "kb":
+            print("[file-guard] 压缩前提示: 纯数据/关闭 checkpoint 项目，跳过存档。", file=sys.stderr)
+            return 0
+    except Exception:
+        pass
+
+    # 2026-10-28 清理：PreCompact 自动归档没有消费方，停用写盘，只提示显式 save。
+    print("[file-guard] 压缩前提示: 自动归档通道已停用（无消费方）；请用 checkpoint-manager.py save 显式保存进度，关键结论落盘 docs/。", file=sys.stderr)
     return 0
 
 

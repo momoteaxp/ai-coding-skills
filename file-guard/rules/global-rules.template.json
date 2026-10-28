@@ -93,18 +93,6 @@
       ],
       "extra": "搞一个XXX"
     },
-    "checkpoint": {
-      "history_limit": 5,
-      "freshness_hours": 24,
-      "read_scope": "current_project_only",
-      "read_scope_note": "AI 读取 checkpoint 只允许指向【当前会话所属项目】的 _checkpoint。当前项目根由会话目录（L2 插件工厂 ctx.directory/worktree，env FILEGUARD_CURRENT_DIR 可覆盖）自路径上溯最近的 project_meta.json 确定。命中判据：目标路径落在某个 _checkpoint 目录、且其所属项目 ≠ 当前项目 → 无条件拦截（与 strict_mode 无关）并回执纠正到本项目。四条读取向量：read/grep/glob/bash（bash 按命令分词提取含 _checkpoint 的 token）。显式逃生通道：tools/checkpoint-manager.py load --project <目标项目根>（命令不含 _checkpoint 路径 token，故放行）——跨项目仅当用户显式点名目标项目时使用。当前项目未识别（无可上溯的 project_meta.json）时仅告警放行，不硬拦。read_scope 改为非 current_project_only 值即可一键关闭该拦截。",
-      "read_vectors": [
-        "read",
-        "grep",
-        "glob",
-        "bash"
-      ]
-    },
     "naming_rules": {
       "date_prefix": "^\\d{4}-\\d{2}-\\d{2}[_-]",
       "mandatory_date_prefix_for": [

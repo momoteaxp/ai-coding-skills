@@ -30,7 +30,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(README|LICENSE|project_meta|_索引|_trash|pyproject\.toml|package\.json|go\.mod|Cargo\.toml|requirements\.txt)",
         "strict_mode": True,
         "read_only_dirs": [],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "src", "tests", "tests/fixtures", "config", "scripts", "docs", "tools", "assets", "data", "release", "backup", "output", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -58,7 +58,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(SKILL|README|LICENSE|project_meta|_索引|deployment-guide|backup)",
         "strict_mode": True,
         "read_only_dirs": [],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "scripts", "hooks", "skills", "references", "tests", "config", "templates", "tools", "docs", "assets", "notes", "notes/敏感数据", "notes/公共资料", "notes/项目文档", "demo", "demo/源文件", "demo/交付", "版本包归档", "backup", "output", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -94,7 +94,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(plugin|SKILL|README|LICENSE|project_meta|_索引|deployment-guide|backup)",
         "strict_mode": True,
         "read_only_dirs": [],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "scripts", "skills", "hooks", "_rules", "config", "templates", "tools", "docs", "release", ".comate", "backup", "output", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -121,7 +121,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(README|LICENSE|project_meta|_索引|package\.json|tsconfig\.json|vite\.config\.(ts|js)|next\.config\.(ts|js))",
         "strict_mode": True,
         "read_only_dirs": [],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "src", "public", "components", "styles", "tests", "config", "scripts", "docs", "assets", "release", "backup", "output", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -149,7 +149,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(SKILL|README|LICENSE|project_meta|_索引)",
         "strict_mode": True,
         "read_only_dirs": ["input"],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "input", "intermediate", "templates", "content", "content/raw", "content/admission", "content/pool", "output", "scripts", "tools", "config", "docs", "samples", "assets", "backup", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -180,7 +180,7 @@ TYPE_TEMPLATES = {
         "root_file_name_rule": r"^(README|project_meta|_索引)",
         "strict_mode": True,
         "read_only_dirs": [],
-        "read_only_files": ["config/global-permission.json", "docs/README.md", "_索引.md"],
+        "read_only_files": ["docs/README.md", "_索引.md"],
         "dirs": ["_checkpoint", "config", "data", "scripts", "tools", "docs", "backup", "output", "archive", "_scratch", "_trash"],
         "dirs_meta": {
             "_checkpoint": ["*.json"],
@@ -205,6 +205,23 @@ C0_PATH_ENV = "FG_HOME"
 C0_REL = "_rules/global-rules.json"
 # 通用层（三种类型都包含）：docs, archive, backup, _scratch, _trash
 COMMON_DIRS = ["docs", "archive", "backup", "_scratch", "_trash"]
+
+# 新项目 .gitignore（运行产物不入库；首次提交前写入）
+GITIGNORE_CONTENT = """# FileGuard project runtime artifacts
+_checkpoint/
+_scratch/
+_trash/
+release/
+output/
+backup/
+archive/
+data/
+__pycache__/
+*.pyc
+*.log
+*.tmp
+*.bak
+"""
 
 # 类型模板唯一事实源 = C0 _rules/global-rules.json 的 rules.dir_type_map。
 # 上面 TYPE_TEMPLATES 仅作为 C0 缺失/损坏时的内置兜底（fallback），
@@ -253,6 +270,13 @@ TEMPLATES = load_type_templates()
 if "kb" in TEMPLATES:
     TEMPLATES["kb"]["dirs"] = [d for d in TEMPLATES["kb"].get("dirs", []) if d != "_checkpoint"]
     (TEMPLATES["kb"].get("dirs_meta") or {}).pop("_checkpoint", None)
+
+# 2026-10-28：web 之前有 _checkpoint 但没有 tools，导致空壳；补 tools 让 checkpoint 工具可装配
+if "web" in TEMPLATES:
+    w = TEMPLATES["web"]
+    if "tools" not in w.get("dirs", []):
+        w.setdefault("dirs", []).append("tools")
+    w.setdefault("dirs_meta", {}).setdefault("tools", ["*.py", "*.ps1", "*.sh"])
 
 # 旧类型别名（与 C0 rules.type_aliases 一致；C0 读取失败时内置兜底）
 ALIAS_FALLBACK = {"A": "software", "B": "skill", "C": "docgen"}
@@ -314,7 +338,8 @@ def project_meta(name: str, ptype: str, label: str, note: str, root_rel: str) ->
         "version": "0.1.0",  # 初始版本；SemVer 三段 X.Y.Z，递进规则见 docs/版本管理规范.md §二
         "dirs": t["dirs_meta"],
         "root_file_name_rule": t["root_file_name_rule"],
-        "read_only_files": list(t.get("read_only_files", [])),
+        "read_only_files": [f for f in t.get("read_only_files", [])
+                            if f != "config/global-permission.json"],
         "read_only_dirs": list(t.get("read_only_dirs", [])),
         "reuse_dirs": ["src", "scripts", "tests", "config", "docs", "tools", "assets"],
         "trash_dir": "_trash",
@@ -395,26 +420,17 @@ def suite_dir() -> Path:
 
 ASSEMBLY_SPEC = [
     # (kind, src_rel, dst_rel)
-    ("mkdir",  None,                            "_checkpoint/"),
     ("paths",  None,                            "tools/_paths.py"),
-    ("copy",   "scripts/checkpoint-manager.py", "tools/checkpoint-manager.py"),
     ("copy",   "scripts/trash-cli.py",          "tools/trash-cli.py"),
-    ("copy",   "scripts/git-watchdog.py",       "tools/git-watchdog.py"),
     ("copy",   "scripts/version_check.py",      "tools/version_check.py"),
     ("copy",   "scripts/build-release.py",      "tools/build-release.py"),
     ("tmpl",   "templates/README.project.md",   "README.md"),
     ("tmpl",   "templates/docs-README.md",      "docs/README.md"),
     ("tmpl",   "templates/版本管理规范.md",      "docs/版本管理规范.md"),
-    ("tmpl",   "templates/global-permission.json", "config/global-permission.json"),
     ("hook",   "scripts/git-hooks/pre-commit",  ".git/hooks/pre-commit"),
 ]
 
-# mkdir 类组件的白名单扩展名（与 C0 rules.dir_type_map 的 dirs_meta 同口径）。
-# 该目录未登记时必须补登记，否则 L2 插件会拒绝向该目录写入（见 assemble 的"登记即建"）。
-ASSEMBLY_MKDIR_EXTS = {
-    "_checkpoint": ["*.json"],
-}
-
+# mkdir 类组件不再使用；保留 ASSEMBLY_MKDIR_EXTS 会误导后续维护者
 TYPE_LABEL_SHORT = {
     "software": "软件应用（src+scripts+tests+docs+config）",
     "skill": "客户端 skill（SKILL.md+scripts+references+assets）",
@@ -451,25 +467,8 @@ def assemble(proj: Path, ptype: str, meta: dict, suite_root: Path) -> tuple[list
     spec = list(ASSEMBLY_SPEC)
     if ptype in ("skill", "docgen", "suite"):
         spec.append(("tmpl", "templates/SKILL.project.md", "SKILL.md"))
-    # 2026-10-27 通用豁免：kb / checkpoint_enabled=false 不创建 _checkpoint（无消费方，避免死配置）
-    cp_enabled = meta.get("checkpoint_enabled", True)
-    if ptype == "kb" or cp_enabled is False or str(cp_enabled).strip().lower() == "false":
-        spec = [s for s in spec if not (s[0] == "mkdir" and s[2] == "_checkpoint/")]
     dirs_keys = list((meta.get("dirs") or {}).keys()) if isinstance(meta.get("dirs"), dict) else list(meta.get("dirs") or [])
     for kind, src_rel, dst_rel in spec:
-        if kind == "mkdir":
-            key = dst_rel.rstrip("/")
-            if key not in dirs_keys:
-                if isinstance(meta.get("dirs"), dict):
-                    meta["dirs"][key] = list(ASSEMBLY_MKDIR_EXTS.get(key, []))
-                    meta_file = proj / "project_meta.json"
-                    if meta_file.exists():
-                        meta_file.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-                    dirs_keys.append(key)
-                    fixed.append(f"{dst_rel} 已补登记进 project_meta.json")
-                else:
-                    skipped.append(f"{dst_rel}（未登记且 meta.dirs 非字典，无法补登记）")
-                    continue
         if kind in ("copy", "tmpl", "paths"):
             # 目标父目录须在白名单（同 sync skip-no-tools 语义；README.md 属根级不在 dirs）
             # hook 写 .git/hooks/ 属 git 内部路径，豁免白名单检查
@@ -478,13 +477,11 @@ def assemble(proj: Path, ptype: str, meta: dict, suite_root: Path) -> tuple[list
                 skipped.append(f"{dst_rel}（父目录不在白名单）")
                 continue
         dst = proj / dst_rel
-        if dst.exists() and kind != "mkdir":
+        if dst.exists():
             skipped.append(f"{dst_rel}（已存在）")
             continue
         try:
-            if kind == "mkdir":
-                dst.mkdir(parents=True, exist_ok=True)
-            elif kind == "paths":
+            if kind == "paths":
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_text(MINI_PATHS_PY, encoding="utf-8")
             elif kind == "copy":
@@ -510,42 +507,6 @@ def assemble(proj: Path, ptype: str, meta: dict, suite_root: Path) -> tuple[list
             done.append(dst_rel)
         except OSError as e:
             failed.append(f"{dst_rel}（{e}）")
-    # 写指纹 .fileguard-sync.json（同 sync-projects 口径：copy/hook 用二进制哈希，tmpl 用规范化文本哈希）
-    import hashlib
-    comp_ids = {
-        "checkpoint-dir": ("mkdir", "_checkpoint/"),
-        "paths-py": ("paths", "tools/_paths.py"),
-        "checkpoint-manager": ("copy", "tools/checkpoint-manager.py"),
-        "trash-cli": ("copy", "tools/trash-cli.py"),
-        "git-watchdog": ("copy", "tools/git-watchdog.py"),
-        "readme-root": ("tmpl", "README.md"),
-        "readme-docs": ("tmpl", "docs/README.md"),
-        "version-rules": ("tmpl", "docs/版本管理规范.md"),
-        "permission-config": ("tmpl", "config/global-permission.json"),
-        "version-check": ("copy", "tools/version_check.py"),
-        "build-release": ("copy", "tools/build-release.py"),
-        "skill-md": ("tmpl", "SKILL.md"),
-    }
-    # 套件版本唯一事实源 = project_meta.json（防发版后指纹残留旧版，doctor 12/12 会静态核对）
-    try:
-        _ver = json.loads((suite_root / "project_meta.json").read_text(encoding="utf-8")).get("version", "0.0.0")
-    except Exception:
-        _ver = "0.0.0"
-    fingerprint = {"suite_version": _ver, "synced_at": date.today().strftime("%Y%m%d"),
-                   "components": {}}
-    for cid, (kind, rel) in comp_ids.items():
-        dst = proj / rel
-        if kind == "mkdir":
-            continue  # 目录不参与指纹哈希（同 sync-projects：无 source 组件不记指纹）
-        if not dst.exists():
-            continue
-        if kind in ("tmpl", "paths"):
-            h = hashlib.sha256(dst.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
-        else:
-            h = hashlib.sha256(dst.read_bytes()).hexdigest()
-        fingerprint["components"][cid] = h
-    (proj / ".fileguard-sync.json").write_text(
-        json.dumps(fingerprint, ensure_ascii=False, indent=2), encoding="utf-8")
     return done, skipped, failed, fixed
 
 
@@ -572,34 +533,74 @@ def main() -> int:
 
     # 已存在且非 --force：拒绝（避免覆盖既有项目）
     meta_file = proj / "project_meta.json"
-    if proj.exists() and not args.force:
+    is_existing = proj.exists()
+    if is_existing and not args.force:
         print(f"[FAIL] 项目已存在: {proj}（既有项目请走贴标渐进，不要用 init 重建）")
         return 1
 
-    # 1) 建骨架
-    dirs = sorted(set(t["dirs"]))
+    # 1) 建骨架（实际目录 ∪ 模板目录；只增不删）
+    existing_meta = {}
+    if meta_file.is_file():
+        try:
+            existing_meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        except Exception:
+            print(f"[FAIL] 既有 project_meta.json 无法解析；拒绝覆盖，请先修复/备份: {meta_file}")
+            return 1
+    dirs = sorted(set(t["dirs"]) | set(existing_meta.get("dirs") or []))
+    cp_off = (ptype in ("kb", "data")
+              or str(existing_meta.get("checkpoint_enabled", True)).strip().lower() == "false")
+    if cp_off:
+        dirs = [d for d in dirs if d != "_checkpoint"]
     for d in dirs:
         (proj / d).mkdir(parents=True, exist_ok=True)
 
-    # 2) 写 project_meta.json（已存在则不覆盖，除非 --force）
-    if meta_file.exists() and not args.force:
-        print(f"[SKIP] project_meta.json 已存在: {meta_file}")
+    # 1.5) .gitignore（存在则不动）
+    gi = proj / ".gitignore"
+    if not gi.is_file():
+        gi.write_text(GITIGNORE_CONTENT, encoding="utf-8")
+        print(f"[OK] .gitignore -> {gi}")
+
+    # 2) project_meta.json：不存在则生成；已存在则只合并缺失 dirs，绝不覆盖
+    if existing_meta:
+        changed = False
+        mdirs = existing_meta.get("dirs")
+        if isinstance(mdirs, dict):
+            for d in t["dirs"]:
+                if cp_off and d == "_checkpoint":
+                    continue
+                if d not in mdirs:
+                    mdirs[d] = list(t["dirs_meta"].get(d, []))
+                    changed = True
+        elif isinstance(mdirs, list):
+            for d in t["dirs"]:
+                if cp_off and d == "_checkpoint":
+                    continue
+                if d not in mdirs:
+                    mdirs.append(d)
+                    changed = True
+        else:
+            existing_meta["dirs"] = dict(t["dirs_meta"])
+            changed = True
+        if ptype == "kb" and "checkpoint_enabled" not in existing_meta:
+            existing_meta["checkpoint_enabled"] = False
+            changed = True
+        if changed:
+            meta_file.write_text(json.dumps(existing_meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(f"[OK] project_meta.json 合并缺失 dirs（原值保留）: {meta_file}")
+        else:
+            print(f"[SKIP] project_meta.json 已完整: {meta_file}")
+        meta = existing_meta
     else:
         meta = project_meta(args.name, ptype, t["label"], t["note"], str(root))
         meta_file.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[OK] project_meta.json -> {meta_file}")
 
-    # 3) 写 _索引.md（已存在则不覆盖）
+    # 3) _索引.md：存在则绝不覆盖
     idx = proj / "_索引.md"
-    if idx.exists() and not args.force:
-        print(f"[SKIP] _索引.md 已存在: {idx}")
+    if idx.exists():
+        print(f"[SKIP] _索引.md 已存在（--force 也不覆盖）: {idx}")
     else:
-        # 版本行以刚写入/已有的 project_meta.json 为唯一真源（消除新建项目索引版本与 meta 脱节根源）
-        _meta_version = ""
-        try:
-            _meta_version = str(json.loads(meta_file.read_text(encoding="utf-8")).get("version", "0.1.0"))
-        except Exception:
-            _meta_version = "0.1.0"
+        _meta_version = str(meta.get("version", "0.1.0"))
         idx.write_text(index_md(args.name, ptype, t["label"], dirs, t["note"], version=_meta_version), encoding="utf-8")
         print(f"[OK] _索引.md -> {idx}")
 
@@ -629,18 +630,49 @@ def main() -> int:
             print(f"[WARN] 装配失败 {f}")
         for x in fixed:
             print(f"[FIX] {x}")
+        # 6) checkpoint 分发（标准版复制 + _checkpoint + meta 白名单；kb/data/disabled 自动跳过）
+        try:
+            import importlib.util
+            wf_path = Path(__file__).resolve().parent / "checkpoint-workflow.py"
+            spec = importlib.util.spec_from_file_location("checkpoint_workflow", wf_path)
+            wf = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(wf)
+            r = wf.distribute(proj, meta)
+            if r.get("action") == "installed":
+                print(f"[OK] checkpoint 分发: tools/checkpoint-manager.py + _checkpoint/"
+                      + ("（meta 白名单已补）" if r.get("meta_updated") else ""))
+            elif r.get("action") == "skipped":
+                print(f"[SKIP] checkpoint 分发: {r.get('reason')}")
+            else:
+                print(f"[WARN] checkpoint 分发失败: {r.get('reason')}")
+        except Exception as e:
+            print(f"[WARN] checkpoint 分发异常: {e}")
     else:
         print(f"[WARN] 无 project_meta.json，跳过组件装配")
 
-    # 6) git add + commit（骨架、装配产物与指纹一并入仓）
-    if has_git and (proj / ".git").exists():
-        import subprocess
+    # 5.5) 首次提交前生成 .comateignore（避免 L3 防漏把生成物当未跟踪文件）
+    import subprocess
+    try:
+        ig = Path(__file__).resolve().parent / "ignore-gen.py"
+        r = subprocess.run([sys.executable, str(ig), "--write", "--project", str(proj)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if r.returncode == 0:
+            print("[OK] .comateignore 已生成（提交前）")
+        else:
+            print(f"[WARN] .comateignore 生成失败（提交前）: {r.stderr.strip() or r.stdout.strip()}")
+    except Exception as e:
+        print(f"[WARN] .comateignore 生成异常（提交前，不阻断）: {e}")
+
+    # 6) git add + commit（仅新建项目；既有项目 --force 不自动提交，避免混入用户改动）
+    if not is_existing and has_git and (proj / ".git").exists():
         try:
             subprocess.run(["git", "add", "-A"], cwd=str(proj), check=True, capture_output=True, text=True)
             subprocess.run(["git", "commit", "-m", "chore: init project skeleton"], cwd=str(proj), check=True, capture_output=True, text=True)
             print(f"[OK] Git 首次提交完成: {proj}")
         except subprocess.CalledProcessError as e:
             print(f"[WARN] Git 提交失败（非阻塞）: {e.stderr.strip() or e.stdout.strip()}")
+    elif is_existing:
+        print("[SKIP] 既有项目不自动提交（--force 只补缺失内容）")
 
     # 7) 登记 + 引擎级兜底（新建一步建齐闭环：登记表 + .comateignore）
     reg = register_project(proj, ptype)

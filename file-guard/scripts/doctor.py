@@ -197,15 +197,20 @@ def main() -> int:
     try:
         reg_path = COMATE_FG_HOME / "_rules" / "managed-projects.json"
         roots: list[Path] = []
+        reg_projects: list = []
         reg_err = ""
         try:
             reg = json.loads(reg_path.read_text(encoding="utf-8"))
-            roots = [Path(p["root"]) for p in (reg.get("projects") or []) if p.get("root")]
+            reg_projects = reg.get("projects") or []
+            roots = [Path(p["root"]) for p in reg_projects
+                     if p.get("root")
+                     and str(p.get("type") or "").strip().lower() != "data"
+                     and p.get("managed") is not False]
         except FileNotFoundError:
             pass
         except Exception as e:
             reg_err = str(e)
-        if not roots:
+        if not roots and not reg_projects:
             roots = sorted({m.parent for pattern in ("*/project_meta.json", "*/*/project_meta.json")
                             for m in COMATE_FG_HOME.glob(pattern)}, key=str)
         if reg_err:
@@ -230,7 +235,10 @@ def main() -> int:
         if roots and bad == 0 and ign_missing == 0:
             ok(f"D5 项目登记 {len(roots)} 个项目 meta 可解析 + .comateignore 已生成: {', '.join(r.name for r in roots)}")
         elif not roots:
-            warn(f"D5 项目登记 登记表为空且 {COMATE_FG_HOME} 下暂无已登记项目（新装机正常；用 new-project 建首个项目）")
+            if reg_projects:
+                ok("D5 项目登记 登记表只有数据/资料目录，跳过受管项目检查")
+            else:
+                warn(f"D5 项目登记 登记表为空且 {COMATE_FG_HOME} 下暂无已登记项目（新装机正常；用 new-project 建首个项目）")
     except Exception as e:
         fail(f"D5 项目登记 检查异常: {e}")
 
@@ -301,6 +309,10 @@ def main() -> int:
         reg_path = COMATE_FG_HOME / "_rules" / "managed-projects.json"
         reg = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.is_file() else {"projects": []}
         reg_roots = {_norm(str(Path(p["root"]))) for p in reg.get("projects", []) if p.get("root")}
+        data_roots = {_norm(str(Path(p["root"]))) for p in reg.get("projects", [])
+                      if p.get("root") and (str(p.get("type") or "").strip().lower() == "data"
+                                            or p.get("managed") is False)}
+        scan_roots = reg_roots - data_roots
         missing_meta: list[str] = []   # 受管根下有目录但无 project_meta.json → 从未登记
         unregistered: list[str] = []   # 有 project_meta.json 但不在登记表 → 半登记（拦截生效但无兜底）
         stale: list[str] = []          # 登记表指向的根目录不存在 → 登记失效
@@ -310,12 +322,14 @@ def main() -> int:
             """容器目录判定：该目录内（任意深度）已有登记项目 → 是分类容器，不是漏网。
             2026-10-27 补：products 根下允许分类目录嵌套（如 github/github-release-skill）。"""
             dn = _norm(str(d))
-            return any(r.startswith(dn + "/") and r != dn for r in reg_roots)
+            return any(r.startswith(dn + "/") and r != dn for r in scan_roots)
 
         if managed_root.is_dir():
             for d in managed_root.iterdir():
                 if not d.is_dir() or d.name.startswith("."):
                     continue
+                if _norm(str(d)) in data_roots:
+                    continue  # 已登记的数据/资料目录，跳过管理扫描
                 has_meta = (d / "project_meta.json").is_file()
                 if not has_meta:
                     if _contains_registered(d):
@@ -356,6 +370,10 @@ def main() -> int:
                 bad_dirs.append(f"{rp.name}(meta 解析失败)")
                 continue
             cp_enabled = m.get("checkpoint_enabled", p.get("checkpoint_enabled", True))
+            if str(m.get("type") or p.get("type") or "").strip().lower() == "data" \
+                    or p.get("managed") is False or m.get("managed") is False:
+                skipped.append(f"{rp.name}(data/managed:false)")
+                continue
             if cp_enabled is False or str(cp_enabled).strip().lower() == "false":
                 skipped.append(f"{rp.name}(checkpoint_enabled=false)")
                 continue
@@ -363,14 +381,19 @@ def main() -> int:
             if ptype == "kb":
                 skipped.append(f"{rp.name}(type=kb)")
                 continue
+            missing = []
             if "_checkpoint" not in (m.get("dirs") or {}):
-                bad_dirs.append(rp.name)
+                missing.append("meta 白名单")
+            if not (rp / "tools" / "checkpoint-manager.py").is_file():
+                missing.append("tools/checkpoint-manager.py")
+            if missing:
+                bad_dirs.append(f"{rp.name}({'/'.join(missing)})")
         if bad_dirs:
-            fail("D12 进度体系前提：以下登记项目 meta 缺 _checkpoint 白名单（标准 checkpoint 流程会被拦，"
-                 "进度档案将被迫自创根级文件）: " + "、".join(bad_dirs)
+            fail("D12 进度体系前提：以下登记项目缺 checkpoint 运行时（meta 白名单或本地 tools/checkpoint-manager.py）: "
+                 + "、".join(bad_dirs)
                  + (f"；已豁免 {len(skipped)} 个：{'、'.join(skipped)}" if skipped else ""))
         else:
-            ok("D12 进度体系前提：全部适用项目 meta 含 _checkpoint 白名单"
+            ok("D12 进度体系前提：全部适用项目含 _checkpoint 白名单 + 本地 tools/checkpoint-manager.py"
                + (f"（豁免 {len(skipped)} 个：{'、'.join(skipped)}）" if skipped else ""))
     except Exception as e:
         fail(f"D12 进度体系前提 检查异常: {e}")
