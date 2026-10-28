@@ -35,7 +35,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
     except Exception:
         pass
 
-SEMVER = r"(\d+\.\d+\.\d+)"
+SEMVER = r"(\d+\.\d+\.\d+(?:\+build\.\d+)?)"
 
 # 文档版本行：只认 v 前缀或 版本/version 关键字 + 可选标记字符，避免误命中正文裸版本号
 # （如 "Comate 4.13.4"、"Python 3.11"）；实测格式："> 版本：v0.2.2" / "- 当前版本：`v0.2.2`"

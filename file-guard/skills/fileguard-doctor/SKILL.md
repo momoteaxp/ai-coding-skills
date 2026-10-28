@@ -1,6 +1,6 @@
 ---
 name: fileguard-doctor
-version: 0.6.3+build.1
+version: 0.6.3+build.2
 description: FileGuard 套件体检与受管项目管理。当用户想检查 FileGuard(comate) 插件是否正常工作、想对新项目做"套件体检"（登记目录白名单/命名规则/只读清单）、想在 comate 侧一键新建受管项目、或想了解当前受管项目状态时使用。
 ---
 
