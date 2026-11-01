@@ -392,7 +392,7 @@ MINI_PATHS_PY = """#!/usr/bin/env python3
 \"\"\"项目私有最小路径派生（SSOT 契约 L2：FG_HOME env 优先，禁止硬编码路径）。
 
 用法: from _paths import fg_home, rules_dir; 项目内脚本一律经此派生路径。
-规则见 docs/SSOT-契约.md（L0 全局层 / L2 项目层）。
+规则见 项目内文档（L0 全局层 / L2 项目层）。
 \"\"\"
 import os
 from pathlib import Path

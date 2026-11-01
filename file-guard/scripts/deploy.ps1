@@ -94,7 +94,7 @@ $content = $content.Replace("{PLUGIN_DIR}", $pluginPath)
 Write-Host "Generated hooks.json with plugin path: $pluginPath"
 
 # --- 3.5) merge hook paths into global user hooks (~/.comate/hooks.json) ---
-# Preserve other projects' hooks (e.g. knowledge-base Stop hook):
+# Preserve other projects' hooks (e.g. other-project Stop hook):
 #   - our hook already present -> rewrite command to the current plugin path
 #   - our hook missing         -> append it under the right event/matcher
 $globalHooks = Join-Path $env:USERPROFILE ".comate\hooks.json"

@@ -13,7 +13,7 @@
   D8 环境变量   生效受管根 = COMATE_FG_HOME→FG_HOME→%USERPROFILE%\\comate（显示实际值）
   D9 版本一致性 版本行清单（project_meta/plugin/SKILL 等）全部一致
   D10 引擎级拦截 .comateignore 与 ignore-gen.py 生成内容一致（不依赖 hooks 的拦截通道）
-  D11 漏网项目 受管根 products 下无 project_meta.json 的目录（含已登记项目的容器目录除外）/ 已建 meta 未登记的目录 / 登记表指向不存在的目录——三类都主动告警（防手工建项目绕过入口再漏网，2026-10-26 incident 事件；2026-10-27 容器目录豁免，如 github/github-release-skill）
+  D11 漏网项目 受管根 products 下无 project_meta.json 的目录（含已登记项目的容器目录除外）/ 已建 meta 未登记的目录 / 登记表指向不存在的目录——三类都主动告警（防手工建项目绕过入口再漏网，2026-10-26 incident 事件；2026-10-27 容器目录豁免，如 github/other-project）
   D12 进度体系前提 适用项目 meta 必须含 _checkpoint 白名单（type=kb 或 checkpoint_enabled=false 的纯数据项目豁免，不强制回填）
 
 用法: python doctor.py
@@ -140,7 +140,7 @@ def main() -> int:
                     if "pre-compact.py" in cmd and not (PLUGIN_DIR / "scripts" / "pre-compact.py").is_file():
                         scripts_ok = False
         global_hook = USERPROFILE / ".comate" / "hooks.json"
-        # 合并语义（2026-10-26）：全局 hooks.json 允许共存其他项目的钩子（如 knowledge-base 的
+        # 合并语义（2026-10-26）：全局 hooks.json 允许共存其他项目的钩子（如 other-project 的
         # Stop hook，8.3 短路径），本项目的每个 (事件组, matcher) 及其命令在全局中逐条存在即可，
         # 不再要求逐字节相等（逐字节会在别人装钩子后误判 D2 失败、卡死发版）。
         gh_ok = global_hook.is_file()
@@ -320,7 +320,7 @@ def main() -> int:
 
         def _contains_registered(d: Path) -> bool:
             """容器目录判定：该目录内（任意深度）已有登记项目 → 是分类容器，不是漏网。
-            2026-10-27 补：products 根下允许分类目录嵌套（如 github/github-release-skill）。"""
+            2026-10-27 补：products 根下允许分类目录嵌套（如 github/other-project）。"""
             dn = _norm(str(d))
             return any(r.startswith(dn + "/") and r != dn for r in scan_roots)
 

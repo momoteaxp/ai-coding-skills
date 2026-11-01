@@ -6,7 +6,7 @@ version: {version}
 
 # {project_name}
 
-{type_label}。骨架按 FileGuard 受管项目体系生成（docs/受管项目体系设计-20261023.md）。
+{type_label}。骨架按 FileGuard 受管项目体系生成（项目内文档）。
 
 ## 目录速览
 

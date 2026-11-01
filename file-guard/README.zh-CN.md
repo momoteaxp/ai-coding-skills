@@ -5,7 +5,7 @@
 **Comate 版 FileGuard：写前拦截 + 跨窗口续接 + 一条龙受管项目体系**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.8.0-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
+[![Version](https://img.shields.io/badge/version-v0.8.0+build.1-green.svg)](https://github.com/momoteaxp/ai-coding-skills/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#环境要求)
 
 [中文](README.zh-CN.md) | [English](README.md)
