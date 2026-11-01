@@ -427,6 +427,8 @@ ASSEMBLY_SPEC = [
     ("tmpl",   "templates/README.project.md",   "README.md"),
     ("tmpl",   "templates/docs-README.md",      "docs/README.md"),
     ("tmpl",   "templates/版本管理规范.md",      "docs/版本管理规范.md"),
+    ("copy",   "templates/开发审计标准.md",      "docs/开发审计标准.md"),
+    ("copy",   "templates/审计报告模板.md",      "docs/审计报告模板.md"),
     ("hook",   "scripts/git-hooks/pre-commit",  ".git/hooks/pre-commit"),
 ]
 

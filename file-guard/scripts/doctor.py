@@ -331,6 +331,13 @@ def main() -> int:
                 if _norm(str(d)) in data_roots:
                     continue  # 已登记的数据/资料目录，跳过管理扫描
                 has_meta = (d / "project_meta.json").is_file()
+                if has_meta:
+                    try:
+                        _m = json.loads((d / "project_meta.json").read_text(encoding="utf-8"))
+                    except Exception:
+                        _m = {}
+                    if isinstance(_m, dict) and _m.get("managed") is False:
+                        continue  # 显式排除（临时交付物/非受管项目，不登记）
                 if not has_meta:
                     if _contains_registered(d):
                         continue  # 容器目录（内含已登记项目），非漏网

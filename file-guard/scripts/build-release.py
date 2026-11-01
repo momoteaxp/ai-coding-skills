@@ -189,7 +189,10 @@ def verify_zip(zip_path: Path) -> bool:
                 "scripts/pre-tool-use.py", "scripts/pre-compact.py",
                 "scripts/checkpoint-manager.py", "scripts/checkpoint-workflow.py",
                 "scripts/doctor.py", "scripts/new-project.py", "scripts/audit.py",
-                "scripts/audit_deep.py",
+                "scripts/audit_deep.py", "scripts/audit_fix.py",
+                "scripts/deploy-audit-standard.py",
+                "skills/project-audit/SKILL.md",
+                "templates/开发审计标准.md", "templates/审计报告模板.md",
                 "scripts/ignore-gen.py", "scripts/enforcer.py"]:
         if any(fnmatch(rel, pat) for pat in publish_exclude):
             continue

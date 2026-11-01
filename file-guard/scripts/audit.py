@@ -20,6 +20,7 @@
 - 退出码：有 P0 → 1，否则 0。
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -45,6 +46,34 @@ SEV_ORDER = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 DEAD_FEATURES = [
     ("trash-cli", "回收站 CLI"),
 ]
+
+# 规则一致性检查：.fileguard-sync.json 组件 id -> 项目内相对路径
+SYNC_COMPONENTS = {
+    "paths-py": "tools/_paths.py",
+    "checkpoint-manager": "tools/checkpoint-manager.py",
+    "trash-cli": "tools/trash-cli.py",
+    "readme-root": "README.md",
+    "readme-docs": "docs/README.md",
+    "version-rules": "docs/版本管理规范.md",
+    "permission-config": "config/global-permission.json",
+    "version-check": "tools/version_check.py",
+    "build-release": "tools/build-release.py",
+    "skill-md": "SKILL.md",
+    "git-watchdog": "tools/git-watchdog.py",
+}
+# 设计文档里声明为“通用组件”的路径；声明了但实物缺失 → 规则漂移
+DESIGN_COMPONENTS = {
+    "tools/_paths.py",
+    "tools/checkpoint-manager.py",
+    "tools/trash-cli.py",
+    "tools/git-watchdog.py",
+    "tools/version_check.py",
+    "tools/build-release.py",
+    "docs/README.md",
+    "docs/版本管理规范.md",
+    "config/global-permission.json",
+    ".git/hooks/pre-commit",
+}
 
 
 def _now() -> str:
@@ -300,7 +329,6 @@ def audit_references(root: Path, findings):
     missing = []
     personal = []
     hardcoded = {}
-    seen = set()
     file_exts = {".py", ".ps1", ".json", ".md", ".vbs", ".cmd", ".bat",
                  ".sh", ".txt", ".yml", ".yaml", ".toml", ".exe", ".dll"}
 
@@ -317,6 +345,7 @@ def audit_references(root: Path, findings):
         if p.name == "audit.py":
             continue
         text = _read(p)
+        seen = set()
         for m in abs_re.finditer(text):
             raw = m.group(1).rstrip(").,;，。；")
             if raw in seen:
@@ -517,6 +546,109 @@ def audit_wrapper_fallback(root: Path, findings, suite_root: Path | None):
             return
 
 
+def _sha256_file(p: Path) -> str | None:
+    try:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def audit_rule_consistency(root: Path, findings, suite_root: Path | None = None):
+    """规则一致性：文档是否自称真源、同步指纹是否过期、设计文档组件是否缺失、是否教人直接写 checkpoint。"""
+    # 1) 文档自称规则真源（运行时规则应以 C0 + project_meta 为准）
+    hits = []
+    for p in _iter_files(root, {".md"}):
+        text = _read(p)
+        for i, line in enumerate(text.splitlines(), 1):
+            if not line.strip():
+                continue
+            low = line.lower()
+            if re.search(r"(本文档|本文件).{0,30}(唯一依据|唯一真源|规则真源)", line):
+                hits.append((p, i, line.strip()))
+                break
+            if "project_meta" in line or "c0" in low or "global-rules" in low:
+                continue
+            if re.search(r"[（(]真源[）)]", line) or re.search(r"(目录白名单|命名规则|只读规则).{0,20}真源", line):
+                hits.append((p, i, line.strip()))
+                break
+    if hits:
+        ev = "；".join(f"{_rel(p, root)}:{ln} {txt[:80]}" for p, ln, txt in hits[:5])
+        _add(findings, "P1", "rule-consistency", "文档自称规则真源",
+             ev,
+             "AI 可能把文档当运行时规则源，绕过 C0/project_meta；规则与实现会分叉",
+             "改为“设计说明”；运行时规则以 C0 + 各项目 project_meta.json 为准，冲突时 C0/meta 优先")
+
+    # 2) 同步指纹（.fileguard-sync.json）与实物比对
+    sync = root / ".fileguard-sync.json"
+    if sync.is_file():
+        doc = _load_json(sync) or {}
+        comps = doc.get("components") if isinstance(doc.get("components"), dict) else {}
+        missing, drift = [], []
+        for cid, rel in SYNC_COMPONENTS.items():
+            if cid not in comps:
+                continue
+            f = root / rel
+            if not f.is_file():
+                missing.append(f"{cid}->{rel}")
+                continue
+            actual = _sha256_file(f)
+            recorded = str(comps.get(cid) or "").strip().lower()
+            if actual and recorded and actual != recorded:
+                drift.append(cid)
+        if missing:
+            _add(findings, "P2", "rule-consistency", "同步指纹指向不存在的文件",
+                 "；".join(missing[:8]),
+                 "按指纹判断的 sync/审计会误以为组件已安装，可能覆盖或漏装",
+                 "更新指纹、移除该组件，或补回文件；确认前不要跑 sync")
+        if drift:
+            _add(findings, "P2", "rule-consistency", "同步指纹与实物不一致",
+                 "；".join(sorted(drift)[:12]),
+                 "本地改动未登记；下一次 sync 可能误判/覆盖，或把项目优化当成漂移",
+                 "确认是有意本地覆盖还是忘了同步；有意则更新指纹/标 local_override，忘了则回套件版本；指纹未更新前不要跑 sync")
+        sv = str(doc.get("suite_version") or "").strip()
+        if suite_root:
+            suite_ver = str((_load_json(suite_root / "project_meta.json") or {}).get("version") or "").strip()
+            if sv and suite_ver and sv != suite_ver:
+                _add(findings, "P3", "rule-consistency", "同步清单版本落后",
+                     f"sync={sv} suite={suite_ver}",
+                     "指纹清单不是当前套件版本；组件可能半新半旧",
+                     "按项目实际决定：更新指纹或标注“部分同步/本地覆盖”")
+
+    # 3) 设计文档声明的通用组件 vs 实物
+    design_docs = list((root / "docs").glob("受管项目体系设计*.md")) if (root / "docs").is_dir() else []
+    for d in design_docs:
+        text = _read(d)
+        missing = [rel for rel in sorted(DESIGN_COMPONENTS) if rel in text and not (root / rel).exists()]
+        if missing:
+            _add(findings, "P2", "rule-consistency", "设计文档声明的组件缺失",
+                 f"{_rel(d, root)}: {', '.join(missing[:8])}",
+                 "init --force / sync 可能按文档再生成一份，形成第二路径源或重复组件",
+                 "补组件或更新设计文档；先统一“这个项目到底用哪套组件”")
+        if ("tools/_paths.py" in text and not (root / "tools/_paths.py").is_file()
+                and (root / "scripts/paths.py").is_file()):
+            _add(findings, "P3", "rule-consistency", "路径模块口径不一致",
+                 f"{_rel(d, root)} 写 tools/_paths.py；项目实际用 scripts/paths.py",
+                 "两套路径派生并存，换机/换盘时容易只改一处",
+                 "统一为 tools/_paths.py 或 scripts/paths.py；并在设计文档写明该项目采用哪一种")
+
+    # 4) 文档教人直接写 checkpoint（直接读不拦；用户 2026-10-31 明确）
+    write_hits = []
+    for p in _iter_files(root, {".md"}):
+        text = _read(p)
+        for i, line in enumerate(text.splitlines(), 1):
+            if "_checkpoint" not in line or "checkpoint-manager" in line:
+                continue
+            if re.search(r"(直接写|写入|save|覆盖)", line, re.I):
+                write_hits.append((p, i, line.strip()))
+                break
+    if write_hits:
+        ev = "；".join(f"{_rel(p, root)}:{ln} {txt[:80]}" for p, ln, txt in write_hits[:5])
+        _add(findings, "P1", "rule-consistency", "文档让直接写 checkpoint",
+             ev,
+             "绕过 checkpoint-manager 的原子写/字段校验，可能把 latest.json 写坏",
+             "写走 tools/checkpoint-manager.py save；读本项目 latest.json 可以直接读")
+
+
 def audit_project(root: Path, findings, suite_root: Path | None = None):
     root = root.resolve()
     if not root.is_dir():
@@ -529,6 +661,7 @@ def audit_project(root: Path, findings, suite_root: Path | None = None):
     audit_versions(root, findings, suite_root)
     audit_management_files(root, findings)
     audit_references(root, findings)
+    audit_rule_consistency(root, findings, suite_root)
     audit_checkpoint(root, findings)
     audit_wrapper_fallback(root, findings, suite_root)
     if suite_root and suite_root == root:

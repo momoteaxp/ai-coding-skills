@@ -1,6 +1,6 @@
 ---
 name: fileguard-doctor
-version: 0.7.1
+version: 0.8.0
 description: FileGuard 套件体检与受管项目管理。当用户想检查 FileGuard(comate) 插件是否正常工作、想对新项目做"套件体检"（登记目录白名单/命名规则/只读清单）、想在 comate 侧一键新建受管项目、或想了解当前受管项目状态时使用。
 ---
 
@@ -36,7 +36,7 @@ python %USERPROFILE%\comate\products\file-guard\scripts\doctor.py
 - **接续**（新窗口）：项目内 `python <项目根>\tools\checkpoint-manager.py load`。单文件永远返回本项目最新一次交接状态；`status=ok` 才是成功，`not_found`（本项目从未 save）或 `error`（JSON 损坏/项目禁用）必须停下来看 `path`，不要当成空进度继续。
 - **分发/升级**：`python <套件>\scripts\checkpoint-workflow.py --project <项目根>` 或 `--all`。新建、接手、升级同一套步骤：复制标准版 → `tools/checkpoint-manager.py`、建 `_checkpoint/`、补 meta 白名单。kb/data/disabled 自动跳过。
 - **多窗口归档**：完整对话由 Stop hook 写 `_traces/comate/<conversation_id>/session.snapshot.json`，与 checkpoint 完全独立。删窗口前用 `archive-status.py --project <根>` 确认 `OK`；checkpoint 不参与归档，也不按窗口分段。
-- **裸读会被拦**：直接读写 `_checkpoint/latest.json`、扫描受管根、或调用套件 `scripts/checkpoint-manager.py` 做 save/load → hook exit 2；只用项目本地 `tools/checkpoint-manager.py`。
+- **裸写会被拦**：直接写 `_checkpoint/latest.json`、扫描受管根、或调用套件 `scripts/checkpoint-manager.py` 做 save/load → hook exit 2；写只用项目本地 `tools/checkpoint-manager.py`。本项目 `latest.json` 允许 `read_file` 直接读，但规范读取优先 `load`；跨项目读和 `run_command` 裸读仍拦。
 - **PreCompact**：只提示、不写归档；跨窗口续接走显式 `save/load`。
 
 ## 发版 / 重启检查 / L4 运维（P5-P7）

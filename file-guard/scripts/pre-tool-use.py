@@ -6,10 +6,9 @@
 
 - 写类（write_file|edit_file|delete_file|apply_patch）：用 enforcer.py 做规则校验
   （C0 黑名单 / _trash / 只读 / 目录白名单），exit 0/2；
-- checkpoint：唯一合法入口是项目本地 tools/checkpoint-manager.py。
-  直接读写 _checkpoint/latest.json、扫描受管根、或调用套件 scripts/checkpoint-manager.py
-  做 save/load → exit 2。hook 不再推断“当前会话属于哪个项目”——
-  项目身份由被调用的本地脚本位置决定，不存在跨项目入口。
+- checkpoint：写仍走项目本地 tools/checkpoint-manager.py；本项目
+  _checkpoint/latest.json 允许 read_file/grep_content/list_dir 直接读；跨项目读、
+  扫描受管根、直接写、或调用套件 scripts/checkpoint-manager.py 做 save/load → exit 2。
 - run_command 另查“引号铁律”：内联代码（python -c / sh -c / heredoc）strict 项目拦截，
   提示先落盘 _scratch\\tmp-*.py（根治命令行→PowerShell→解释器多层吞引号，2026-10-23 定案）。
 
@@ -37,6 +36,7 @@ META_NAME = "project_meta.json"
 MAX_META_DEPTH = 2
 WRITE_TOOLS = {"write_file", "edit_file", "delete_file", "apply_patch"}
 READ_TOOLS = {"read_file", "grep_content", "glob_path", "list_dir", "read_lints", "run_command"}
+READ_ONLY_TOOLS = {"read_file", "grep_content", "glob_path", "list_dir"}
 ENFORCER = Path(__file__).resolve().parent / "enforcer.py"
 
 CHECKPOINT_TOKENS = ("_checkpoint", "latest.json")
@@ -123,16 +123,35 @@ def bash_tokens(cmd: str) -> list[str]:
     return [a or b or c for a, b, c in re.findall(r'"([^"]*)"|\'([^\']*)\'|(\S+)', cmd)]
 
 
+def _project_root_of(cwd: str) -> Path | None:
+    if not cwd:
+        return None
+    meta = find_meta(Path(cwd))
+    return meta.parent.resolve() if meta else None
+
+
+def _target_project_root(target: str, cwd: str) -> Path | None:
+    p = Path(target)
+    if not p.is_absolute() and cwd:
+        p = Path(cwd) / p
+    meta = find_meta(p)
+    return meta.parent.resolve() if meta else None
+
+
+def _is_current_project_checkpoint(target: str, cwd: str) -> bool:
+    cur = _project_root_of(cwd)
+    owner = _target_project_root(target, cwd)
+    return bool(cur and owner and cur == owner)
+
+
 def _block(msg: str) -> int:
     print(f"[file-guard] 拦截: {msg}", file=sys.stderr)
     return 2
 
 
-def check_checkpoint_access(tool_name: str, tool_input: dict) -> int:
-    """checkpoint 兜底：只放行本地 tools/checkpoint-manager.py 与分发工作流。
-
-    不再判断“当前项目是谁”：裸读/扫描/套件脚本 save/load 一律拦。
-    """
+def check_checkpoint_access(tool_name: str, tool_input: dict, cwd: str = "") -> int:
+    """checkpoint 兜底：写只放行本地 tools/checkpoint-manager.py 与分发工作流；
+    读允许本项目 latest.json（read_file/grep_content/list_dir），跨项目/扫描仍拦。"""
     tool_input = tool_input or {}
     if tool_name == "run_command":
         cmd = tool_input.get("command") or ""
@@ -159,7 +178,7 @@ def check_checkpoint_access(tool_name: str, tool_input: dict) -> int:
                 path_like.append(t)
         if broad or path_like:
             return _block("禁止直接读取/扫描 checkpoint；"
-                          "请用本项目 tools/checkpoint-manager.py load。")
+                          "读本项目 latest.json 用 read_file，或 tools/checkpoint-manager.py load。")
         return 0
 
     # 文件类工具（读 + 写）：直接指向 checkpoint，或读整个受管根 → 拦
@@ -171,8 +190,10 @@ def check_checkpoint_access(tool_name: str, tool_input: dict) -> int:
     for t in targets:
         low = t.replace("\\", "/").lower()
         if any(tok in low for tok in CHECKPOINT_TOKENS):
+            if tool_name in READ_ONLY_TOOLS and _is_current_project_checkpoint(t, cwd):
+                continue
             return _block(f"禁止直接读写 checkpoint（{t}）；"
-                          "请用本项目 tools/checkpoint-manager.py save/load。")
+                          "读本项目 latest.json 可用 read_file；写请用本项目 tools/checkpoint-manager.py save/load。")
     roots = managed_roots()
     for t in targets:
         if norm(t).rstrip("/") in roots:
@@ -196,13 +217,13 @@ def main() -> int:
         qr = check_command_quoting(tool_name, tool_input, cwd)
         if qr:
             return qr
-        return check_checkpoint_access(tool_name, tool_input)
+        return check_checkpoint_access(tool_name, tool_input, cwd)
 
     if tool_name not in WRITE_TOOLS:
         return 0
 
     # 写类：先拦裸写 checkpoint，再走 enforcer
-    cr = check_checkpoint_access(tool_name, tool_input)
+    cr = check_checkpoint_access(tool_name, tool_input, cwd)
     if cr:
         return cr
     if not file_path:
